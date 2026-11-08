@@ -247,7 +247,6 @@ Note that `gender`, `imd_band`, `age_band` and `disability` are **not accepted a
 
 - **FastAPI:** `serving/api.py` — `POST /predict` accepts student features and returns `at_risk` probability + SHAP explanation; `GET /health`.
 - **Streamlit:** `serving/dashboard.py` - four sections: (1) the per-checkpoint PR-AUC comparison chart from Step 5 as the headline visual, (2) cohort-level risk distribution, (3) per-student drill-down with SHAP explanation, and (4) a **live what-if form** where you type feature values and watch P(at_risk) plus the SHAP breakdown update. Run with `streamlit run serving/dashboard.py`.
-- **Dockerfile:** `Dockerfile` for the FastAPI service.
 - No MLflow. Model artifacts are written twice per run: **versioned** (`artifacts/models/lgb_pooled_<timestamp>.joblib`, the history) and **pinned** (`artifacts/models/lgb_pooled_production.joblib`, a fixed filename that serving, evaluation, SHAP and the dashboard all load). That removes the ambiguity of "whatever timestamp sorts last." A `metrics.json` is written per training run (`artifacts/metrics.json`) with model name, checkpoint, PR-AUC + CI, date, plus the subgroup and fairness tables.
 
 ## What didn't work / honest dead ends
@@ -302,7 +301,6 @@ python eval/collinearity_check.py
 # 5. Serve
 uvicorn serving.api:app --reload            # FastAPI
 streamlit run serving/dashboard.py          # dashboard
-# or build the Docker image: docker build -t oulad-risk-api -f Dockerfile .
 
 # 5b. Test the API by hand
 python serving/make_sample_input.py         # export a real student's features to JSON
@@ -313,18 +311,11 @@ python serving/test_client.py --full        # use the full 74-feature payload
 python -m pytest features/test_no_leakage.py -q    # also runs automatically inside step 1
 
 # Frontend verification (headless — no browser needed)
-python serving/test_dashboard.py                # renders the app, asserts no exceptions
-python serving/test_dashboard_interactive.py    # flips presets, asserts high-risk >> low-risk
-python serving/test_dashboard_manual_input.py   # types into fields, asserts the score moves both ways
-```
-
-**Not verified:** the `Dockerfile` has not been built in this environment (no Docker available). The FastAPI service and the Streamlit dashboard have both been verified, headlessly:
-
-```bash
 python serving/test_dashboard.py               # renders the app, asserts no exceptions
 python serving/test_dashboard_interactive.py   # flips the presets, asserts high-risk >> low-risk
 python serving/test_dashboard_manual_input.py  # types into fields, asserts the score moves both ways
-python -m pytest features/test_no_leakage.py -q
 ```
 
-Treat the Docker image build as the one step to confirm on a machine with Docker.
+Both the FastAPI service and the Streamlit dashboard have been verified locally.
+
+Container packaging was intentionally removed for this iteration — the services run directly with `uvicorn` / `streamlit run`. No Dockerfile is maintained.
