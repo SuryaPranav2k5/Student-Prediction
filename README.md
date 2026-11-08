@@ -61,7 +61,9 @@ Per student, per checkpoint, using only pre-cutoff data:
 
 Missing demographic fields are encoded as an explicit `"unknown"` category — **never imputed** with mean/mode (e.g., `imd_band` contains `?` values).
 
-Output: `data/processed/features.parquet` (83,727 rows). It holds 88 columns total: **78 model features + 10 metadata columns** (`id_student`, `module_presentation`, `code_module`, `code_presentation`, `checkpoint_label`, `cutoff_day`, `week_elapsed`, `at_risk`, `final_result`, `split`). Versus the earlier excluded-rows version (77 model features), the model feature count grew by exactly **one** column — `no_assessment_closed` — because the earlier `week_elapsed`/activity-click columns and one-hot demographics were already present. And `data/processed/fairness_eval.parquet`.
+Output: `data/processed/features.parquet` (83,727 rows). It holds 84 columns total: **74 model features + 10 metadata columns** (`id_student`, `module_presentation`, `code_module`, `code_presentation`, `checkpoint_label`, `cutoff_day`, `week_elapsed`, `at_risk`, `final_result`, `split`). And `data/processed/fairness_eval.parquet`.
+
+> **Verified correction:** an earlier build carried `gender`, `imd_band`, `age_band` and `disability` in the model feature list (74 → 78 columns), which broke the exclusion rule above. They were silently coerced to constant-zero by `pd.to_numeric(..., errors="coerce")`, so the reported metrics were **not** contaminated — LightGBM PR-AUC is bit-identical before and after the fix (0.8903 / 0.9217 / 0.9416). This is exactly the kind of failure that only shows up as an exception in an unrelated script, so the columns are now dropped physically in `features/build_features.py` (with an assert), re-asserted in `models/train.py`, and `serving/make_sample_input.py` will fail loudly if one ever reappears. See "What didn't work".
 
 ## Metric choice
 
@@ -80,7 +82,7 @@ Two LightGBM strategies compared on the held-out test set:
 |-------|---------------|---------------|----------------|
 | Pooled LightGBM (+ `week_elapsed`) | 0.8903 | 0.9217 | 0.9416 |
 | Separate LightGBM (one per checkpoint) | 0.8901 | 0.9235 | 0.9422 |
-| LogisticRegression baseline | 0.8440 | 0.8929 | 0.9142 |
+| LogisticRegression baseline | 0.8727 | 0.9052 | 0.9251 |
 
 Pooled and per-checkpoint LightGBM are **statistically indistinguishable** (differences ≤ 0.002 PR-AUC, within bootstrap CI overlap). The **pooled model is kept as the production artifact** (single artifact, `week_elapsed` lets one model serve all checkpoints). Full numbers: `artifacts/comparison.json`, `artifacts/metrics.json`.
 
@@ -192,12 +194,45 @@ SHAP `TreeExplainer` on the winning pooled LightGBM model:
 
 - Global feature-importance bar chart: `artifacts/plots/shap_global_importance.png`
 - Top global drivers: `n_missed`, `frac_missed`, `first_assessment_score`, `homepage_clicks_last7`, `mean_earliness_days` — all available at week 4 (consistent with the flat PR-AUC curve above).
-- `no_assessment_closed` sits at **SHAP rank 62 of 78 with mean|SHAP| = 0.00007** — effectively zero importance (16 features rank below it). This is a verified, mechanistic result, not a top-5 coincidence. It is **exactly, symmetrically collinear** with `n_assessments_due`: `no_assessment_closed == 1` iff `n_assessments_due == 0` holds for 100% of rows (it is defined as that comparison, verified across all 83,727 rows). Since `n_assessments_due` also encodes the *magnitude* (1, 2, 3… assessments due), any tree split on `n_assessments_due` recovers the flag perfectly, so the flag contributes strictly no extra information. `n_assessments_due` itself ranks 23 (mean|SHAP| = 0.023) — the tree splits there and the indicator is simply never needed.
+- `no_assessment_closed` sits at **SHAP rank 62 of 74 with mean|SHAP| = 0.00007** - effectively zero importance (12 features rank below it). This is a verified, mechanistic result, not a top-5 coincidence. It is **exactly, symmetrically collinear** with `n_assessments_due`: `no_assessment_closed == 1` iff `n_assessments_due == 0` holds for 100% of rows (it is defined as that comparison, verified across all 83,727 rows). Since `n_assessments_due` also encodes the *magnitude* (1, 2, 3. assessments due), any tree split on `n_assessments_due` recovers the flag perfectly, so the flag contributes strictly no extra information. `n_assessments_due` itself ranks 23 (mean|SHAP| = 0.023) - the tree splits there and the indicator is simply never needed. This is a verified, mechanistic result, not a top-5 coincidence. It is **exactly, symmetrically collinear** with `n_assessments_due`: `no_assessment_closed == 1` iff `n_assessments_due == 0` holds for 100% of rows (it is defined as that comparison, verified across all 83,727 rows). Since `n_assessments_due` also encodes the *magnitude* (1, 2, 3… assessments due), any tree split on `n_assessments_due` recovers the flag perfectly, so the flag contributes strictly no extra information. `n_assessments_due` itself ranks 23 (mean|SHAP| = 0.023) — the tree splits there and the indicator is simply never needed.
   - Worth noting the tempting-but-wrong explanation, since it is a real trap: the flag does *not* become redundant via `n_missed`/`frac_missed`/`first_assessment_score`. That triple signature is genuinely ambiguous — 167 rows (0.2%) have `n_assessments_due > 0`, missed nothing, and recorded a literal first-assessment score of 0, and those rows are 84% at-risk versus 41% for the true no-assessment-yet rows. The redundancy is really through `n_assessments_due`, and that is the clean, correct account.
   - The flag is retained as an explicit interpretability handle (it makes "no assessment signal yet" self-documenting), not because it carries predictive signal — it carries none by construction. Verified by `eval/collinearity_check.py`.
 - 4 worked individual examples with per-student SHAP breakdowns: `artifacts/plots/shap_student_*.png`
 
 No LLM-based natural-language explanation layer was built (out of scope until steps 1–6 are verified).
+
+## Testing the model with input
+
+Start the API, then send a feature dict. **You do not need all 74 features** — the endpoint fills anything you omit with 0, so a small hand-edited payload is enough to move the prediction.
+
+```bash
+uvicorn serving.api:app --reload     # terminal 1
+python serving/make_sample_input.py  # terminal 2 — exports a real student's features to JSON
+python serving/test_client.py        # hits /health and /predict
+```
+
+`artifacts/sample_input.json` is one real held-out student's full 74-feature vector; `artifacts/sample_input_min.json` is a ~15-feature subset you can edit by hand. `python serving/test_client.py --full` uses the full payload.
+
+Equivalent raw calls:
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"features": {"n_missed": 0, "frac_missed": 0.0, "first_assessment_score": 92.0,
+                    "homepage_clicks_last7": 40.0, "studied_credits": 60.0,
+                    "n_assessments_taken": 2, "n_assessments_due": 2,
+                    "no_assessment_closed": 0, "week_elapsed": 12},
+       "checkpoint_label": "week_12"}'
+```
+
+Verified responses (both run against the pinned production model):
+
+| Payload | P(at_risk) | Top SHAP driver |
+|---------|-----------|-----------------|
+| Real held-out student, missing all 5 assessments (true label: Withdrawn) | **0.9960** | `n_missed = +1.93` |
+| Synthetic engaged student, missed nothing, strong scores | **0.0735** | `first_assessment_score = −0.52` |
+
+Note that `gender`, `imd_band`, `age_band` and `disability` are **not accepted as model inputs** — they live only in `fairness_eval.parquet`. Sending them is harmless (they are ignored), but they cannot influence the prediction.
 
 ## Serving (Step 8)
 
@@ -208,10 +243,12 @@ No LLM-based natural-language explanation layer was built (out of scope until st
 
 ## What didn't work / honest dead ends
 
+- **Protected attributes leaked into the model feature list.** `gender`, `imd_band`, `age_band` and `disability` were being carried as model features, violating the Step 3 exclusion rule and making the README's claim that they were excluded false. They were silently coerced to constant-zero by `pd.to_numeric(..., errors="coerce")`, so the effect was benign in the strict sense — LightGBM PR-AUC is **bit-identical** before and after the fix (0.8903 / 0.9217 / 0.9416) — but it was a real defect that no test caught. It surfaced only because `serving/make_sample_input.py` crashed on `float('F')`. Now prevented three ways: the columns are dropped physically in the build (with an assert), re-asserted in `models/train.py::feature_columns`, and the sample exporter will fail loudly. **Lesson: a spec-level constraint ("exclude these from model input") was enforced by convention, not by code, and convention failed silently.**
+- **The mandated baseline was under-converged and under-reported.** `LogisticRegression` hit the `max_iter=1000` limit (unscaled lbfgs on features spanning click counts in the thousands vs scores 0–100), which understated it. With `StandardScaler` + `max_iter=5000` it goes from 0.8440/0.8929/0.9142 to **0.8727/0.9052/0.9251** — and at week 12 it comes within 1.6 points of LightGBM (0.9251 vs 0.9416). A knowingly hobbled baseline would have inflated the main model's apparent advantage, so the scaler is not optional. **Notable takeaway: on this feature set a well-converged linear model is a much stronger baseline than the headline numbers first suggested.**
 - **Label imbalance assumption wrong:** `at_risk` is near-balanced / majority in OULAD, not the minority as the spec anticipated. Class-rebalancing tools still run but target the actual minority (`not_at_risk`).
 - **Precision = 0.5 operating point is degenerate:** since at_risk is prevalent, flagging everyone clears precision=0.5 for free (recall 100%, precision ~57%). It requires zero model discrimination and cannot trigger a useful intervention. Replaced with precision=0.75 as the primary actionable operating point.
 - **GGG/EEE boundary condition:** EEE and GGG have no assessment closed by week 4 (GGG none by week 8). Per the agreed decision these students are **retained** with an explicit `no_assessment_closed` indicator rather than dropped, so coverage is full but week-4/week-8 prediction is harder for those students (no assessment signal). This is why week-4 PR-AUC (0.8903) is lower than it would be on a fully-assessed cohort.
-- **`no_assessment_closed` earns its place only as an interpretability handle, not as signal — and it is *exactly* redundant, not approximately.** It is definitionally `n_assessments_due == 0` (100% agreement over all 83,727 rows, verified by `eval/collinearity_check.py`), so any tree split on `n_assessments_due` already recovers it perfectly. SHAP confirms it: rank 62/78, mean|SHAP| = 0.00007, while `n_assessments_due` itself ranks 23. Kept for explicit, self-documenting missingness — it contributes no predictive information by construction.
+- **`no_assessment_closed` earns its place only as an interpretability handle, not as signal - and it is *exactly* redundant, not approximately.** It is definitionally `n_assessments_due == 0` (100% agreement over all 83,727 rows, verified by `eval/collinearity_check.py`), so any tree split on `n_assessments_due` already recovers it perfectly. SHAP confirms it: rank 62/74, mean|SHAP| = 0.00007, while `n_assessments_due` itself ranks 23. Kept for explicit, self-documenting missingness - it contributes no predictive information by construction.
   - The tempting shortcut — "the `n_missed`/`frac_missed`/`first_assessment_score` triple already encodes it" — is **wrong and worth stating as a trap**: that triple signature is genuinely ambiguous, covering 167 rows (0.2%) where assessments *were* due, nothing was missed, and a literal first score of 0 was recorded. Those rows run 84% at-risk against 41% for true no-assessment-yet rows, so the triple would conflate two very different populations. The redundancy runs through `n_assessments_due`, which is the clean account.
 - **`no_assessment_closed` was *not* actually justified by importance.** It is worth being explicit about this: the feature survived because the brief asked for an explicit "no assessment yet" indicator, and it turned out to be zero-value. The correct lesson is that the indicator was the right thing to *try*, and the SHAP/collinearity audit is what proved it unnecessary.
 - **Fairness is flagged, not resolved.** Recall is broadly comparable across groups, but there is a real ~23-point FPR spread across IMD bands driven by a smooth socioeconomic gradient (deprived students are flagged as false positives ~1.6–1.7× more often even after partial base-rate adjustment). Gender shows essentially no gap (≤0.08). Mitigation was out of scope by design, but the size of the IMD gap is large enough that treating it as a footnote is not adequate for a follow-up iteration.
@@ -251,6 +288,11 @@ python eval/collinearity_check.py
 uvicorn serving.api:app --reload            # FastAPI
 streamlit run serving/dashboard.py          # dashboard
 # or build the Docker image: docker build -t oulad-risk-api -f Dockerfile .
+
+# 5b. Test the API by hand
+python serving/make_sample_input.py         # export a real student's features to JSON
+python serving/test_client.py               # hit /health and /predict
+python serving/test_client.py --full        # use the full 74-feature payload
 
 # Tests
 python -m pytest features/test_no_leakage.py -q    # also runs automatically inside step 1

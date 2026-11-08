@@ -263,6 +263,17 @@ def build_features(raw: Path = Path("data/raw")) -> pd.DataFrame:
 
     features = pd.concat(frames, ignore_index=True)
 
+    # Protected attributes must NEVER be model inputs. Drop them from the
+    # feature matrix entirely (they survive in fairness_eval.parquet, which is
+    # the only sanctioned route). This is a physical guarantee: the column cannot
+    # be referenced by a downstream feature list.
+    leaked = [c for c in FAIRNESS_COLUMNS if c in features.columns]
+    if leaked:
+        features = features.drop(columns=leaked)
+    assert not any(c in features.columns for c in FAIRNESS_COLUMNS), (
+        f"protected attributes leaked into the feature matrix: {leaked}"
+    )
+
     # One-hot encode the non-excluded categorical demographics using full-data
     # categories (fixed labels, no target information -> no leakage).
     cat_cols = [c for c in ["region", "highest_education"] if c in features.columns]

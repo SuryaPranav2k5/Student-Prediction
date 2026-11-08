@@ -31,15 +31,17 @@ import pandas as pd
 from lightgbm import LGBMClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
-from common import ARTIFACTS, MODELS, PROCESSED, TEST_PRESENTATION
+from common import ARTIFACTS, MODELS, PROCESSED, TEST_PRESENTATION, FAIRNESS_COLUMNS
 
 RANDOM_SEED = 42
 
 ID_COLS = [
     "id_student", "module_presentation", "code_module", "code_presentation",
     "checkpoint_label", "cutoff_day", "week_elapsed", "at_risk", "final_result", "split",
-]
+] + FAIRNESS_COLUMNS  # protected attributes: never model inputs
 
 MODEL_DIR = MODELS
 MANIFEST = ARTIFACTS / "model_manifest.json"
@@ -49,6 +51,12 @@ def feature_columns(features: pd.DataFrame, include_week_elapsed: bool) -> list:
     cols = [c for c in features.columns if c not in ID_COLS]
     if not include_week_elapsed:
         cols = [c for c in cols if c != "week_elapsed"]
+    # Hard guard: a protected attribute must never reach the model.
+    leaked = sorted(set(cols) & set(FAIRNESS_COLUMNS))
+    assert not leaked, (
+        f"PROTECTED ATTRIBUTES in model feature set: {leaked}. "
+        "gender/disability/age_band/imd_band are Step-6 fairness inputs only."
+    )
     return cols
 
 
@@ -76,9 +84,17 @@ def train_and_evaluate(features_path: Path = PROCESSED / "features.parquet") -> 
     manifest = {"timestamp": timestamp, "models": []}
 
     # ---- Baseline: LogisticRegression (pooled, week_elapsed included) ----
+    # StandardScaler is required: features span wildly different scales
+    # (click counts in the thousands vs scores 0-100), and unscaled lbfgs hits
+    # the iteration limit without converging, which understates the baseline.
+    # A knowingly under-converged baseline would inflate the main model's
+    # apparent advantage, so scaling is not optional here.
     cols_lr = feature_columns(features, include_week_elapsed=True)
     Xtr, ytr = prep(train, cols_lr)
-    lr = LogisticRegression(class_weight="balanced", max_iter=1000, random_state=RANDOM_SEED)
+    lr = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(class_weight="balanced", max_iter=5000, random_state=RANDOM_SEED),
+    )
     lr.fit(Xtr, ytr)
     joblib.dump(lr, MODEL_DIR / f"lr_pooled_{timestamp}.joblib")
     manifest["models"].append({"name": "lr_pooled", "path": f"lr_pooled_{timestamp}.joblib",
