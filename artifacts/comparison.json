@@ -1,0 +1,82 @@
+{
+  "timestamp": "20261108_200812",
+  "rows": [
+    {
+      "model": "lr_pooled (baseline)",
+      "checkpoint": "week_4",
+      "pr_auc": 0.84399,
+      "n": 7804
+    },
+    {
+      "model": "lr_pooled (baseline)",
+      "checkpoint": "week_8",
+      "pr_auc": 0.892882,
+      "n": 7804
+    },
+    {
+      "model": "lr_pooled (baseline)",
+      "checkpoint": "week_12",
+      "pr_auc": 0.914197,
+      "n": 7804
+    },
+    {
+      "model": "lgb_pooled",
+      "checkpoint": "week_4",
+      "pr_auc": 0.89028,
+      "n": 7804
+    },
+    {
+      "model": "lgb_pooled",
+      "checkpoint": "week_8",
+      "pr_auc": 0.921742,
+      "n": 7804
+    },
+    {
+      "model": "lgb_pooled",
+      "checkpoint": "week_12",
+      "pr_auc": 0.941637,
+      "n": 7804
+    },
+    {
+      "model": "lgb_week_4 (separate)",
+      "checkpoint": "week_4",
+      "pr_auc": 0.890146,
+      "n": 7804
+    },
+    {
+      "model": "lgb_week_8 (separate)",
+      "checkpoint": "week_8",
+      "pr_auc": 0.923455,
+      "n": 7804
+    },
+    {
+      "model": "lgb_week_12 (separate)",
+      "checkpoint": "week_12",
+      "pr_auc": 0.942158,
+      "n": 7804
+    }
+  ],
+  "pivot": {
+    "week_12": {
+      "lgb_pooled": 0.941637,
+      "lgb_week_12 (separate)": 0.942158,
+      "lgb_week_4 (separate)": NaN,
+      "lgb_week_8 (separate)": NaN,
+      "lr_pooled (baseline)": 0.914197
+    },
+    "week_4": {
+      "lgb_pooled": 0.89028,
+      "lgb_week_12 (separate)": NaN,
+      "lgb_week_4 (separate)": 0.890146,
+      "lgb_week_8 (separate)": NaN,
+      "lr_pooled (baseline)": 0.84399
+    },
+    "week_8": {
+      "lgb_pooled": 0.921742,
+      "lgb_week_12 (separate)": NaN,
+      "lgb_week_4 (separate)": NaN,
+      "lgb_week_8 (separate)": 0.923455,
+      "lr_pooled (baseline)": 0.892882
+    }
+  }
+}

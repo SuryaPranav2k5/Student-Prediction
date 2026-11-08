@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Data: raw OULAD CSVs (~450MB) + zip. Re-download via the UCI mirror link in
+# the README and regenerate processed/ by running features/build_features.py.
+data/raw/
+data/processed/
+
+# Model artifacts (regenerable via models/train.py); versioned on purpose.
+artifacts/models/
+
+# Generated evaluation plots
+artifacts/plots/

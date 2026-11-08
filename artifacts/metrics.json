@@ -1,0 +1,632 @@
+{
+  "model": "lgb_pooled",
+  "model_artifact": "lgb_pooled_production.joblib",
+  "date": "2026-11-08",
+  "checkpoints": [
+    {
+      "checkpoint": "week_4",
+      "pr_auc": 0.8903,
+      "pr_auc_ci_lo": 0.8833,
+      "pr_auc_ci_hi": 0.8975,
+      "recall_at_precision_75": 0.8266,
+      "precision_at_operating_point": 0.75,
+      "operating_threshold": 0.3819,
+      "f1_optimal_recall": 0.8133,
+      "f1_optimal_precision": 0.7638,
+      "f1_optimal_threshold": 0.4029,
+      "n": 7804,
+      "n_at_risk": 4446
+    },
+    {
+      "checkpoint": "week_8",
+      "pr_auc": 0.9217,
+      "pr_auc_ci_lo": 0.9161,
+      "pr_auc_ci_hi": 0.9277,
+      "recall_at_precision_75": 0.8799,
+      "precision_at_operating_point": 0.75,
+      "operating_threshold": 0.2932,
+      "f1_optimal_recall": 0.8284,
+      "f1_optimal_precision": 0.7996,
+      "f1_optimal_threshold": 0.3734,
+      "n": 7804,
+      "n_at_risk": 4446
+    },
+    {
+      "checkpoint": "week_12",
+      "pr_auc": 0.9416,
+      "pr_auc_ci_lo": 0.9371,
+      "pr_auc_ci_hi": 0.9463,
+      "recall_at_precision_75": 0.9163,
+      "precision_at_operating_point": 0.75,
+      "operating_threshold": 0.2495,
+      "f1_optimal_recall": 0.8423,
+      "f1_optimal_precision": 0.8507,
+      "f1_optimal_threshold": 0.4083,
+      "n": 7804,
+      "n_at_risk": 4446
+    }
+  ],
+  "overall_pr_auc": 0.92,
+  "subgroup": [
+    {
+      "checkpoint": "week_4",
+      "true_label": "Withdrawn",
+      "n": 2613,
+      "recall": 0.8768
+    },
+    {
+      "checkpoint": "week_4",
+      "true_label": "Fail",
+      "n": 1833,
+      "recall": 0.755
+    },
+    {
+      "checkpoint": "week_8",
+      "true_label": "Withdrawn",
+      "n": 2613,
+      "recall": 0.9131
+    },
+    {
+      "checkpoint": "week_8",
+      "true_label": "Fail",
+      "n": 1833,
+      "recall": 0.8325
+    },
+    {
+      "checkpoint": "week_12",
+      "true_label": "Withdrawn",
+      "n": 2613,
+      "recall": 0.9453
+    },
+    {
+      "checkpoint": "week_12",
+      "true_label": "Fail",
+      "n": 1833,
+      "recall": 0.8751
+    }
+  ],
+  "fairness": [
+    {
+      "checkpoint": "week_4",
+      "column": "gender",
+      "value": "F",
+      "n": 3368,
+      "recall": 0.8005,
+      "fpr": 0.362,
+      "flag_rate": 0.601,
+      "true_prevalence": 0.5448
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "gender",
+      "value": "M",
+      "n": 4436,
+      "recall": 0.8449,
+      "fpr": 0.3666,
+      "flag_rate": 0.6481,
+      "true_prevalence": 0.5886
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "disability",
+      "value": "N",
+      "n": 7029,
+      "recall": 0.8254,
+      "fpr": 0.3572,
+      "flag_rate": 0.6204,
+      "true_prevalence": 0.5622
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "disability",
+      "value": "Y",
+      "n": 775,
+      "recall": 0.836,
+      "fpr": 0.4448,
+      "flag_rate": 0.6942,
+      "true_prevalence": 0.6374
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "age_band",
+      "value": "0-35",
+      "n": 5581,
+      "recall": 0.8347,
+      "fpr": 0.3933,
+      "flag_rate": 0.6545,
+      "true_prevalence": 0.5918
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "age_band",
+      "value": "35-55",
+      "n": 2187,
+      "recall": 0.803,
+      "fpr": 0.3,
+      "flag_rate": 0.5592,
+      "true_prevalence": 0.5153
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "age_band",
+      "value": "55<=",
+      "n": 36,
+      "recall": 0.8125,
+      "fpr": 0.5,
+      "flag_rate": 0.6389,
+      "true_prevalence": 0.4444
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "0-10%",
+      "n": 818,
+      "recall": 0.8598,
+      "fpr": 0.4947,
+      "flag_rate": 0.7335,
+      "true_prevalence": 0.654
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "10-20",
+      "n": 841,
+      "recall": 0.8467,
+      "fpr": 0.4608,
+      "flag_rate": 0.7122,
+      "true_prevalence": 0.6516
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "20-30%",
+      "n": 909,
+      "recall": 0.8313,
+      "fpr": 0.382,
+      "flag_rate": 0.6722,
+      "true_prevalence": 0.6458
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "30-40%",
+      "n": 855,
+      "recall": 0.8176,
+      "fpr": 0.3733,
+      "flag_rate": 0.6269,
+      "true_prevalence": 0.5708
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "40-50%",
+      "n": 747,
+      "recall": 0.8131,
+      "fpr": 0.3072,
+      "flag_rate": 0.5971,
+      "true_prevalence": 0.573
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "50-60%",
+      "n": 708,
+      "recall": 0.8483,
+      "fpr": 0.3366,
+      "flag_rate": 0.6271,
+      "true_prevalence": 0.5678
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "60-70%",
+      "n": 686,
+      "recall": 0.8199,
+      "fpr": 0.3471,
+      "flag_rate": 0.6035,
+      "true_prevalence": 0.5423
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "70-80%",
+      "n": 662,
+      "recall": 0.7845,
+      "fpr": 0.3667,
+      "flag_rate": 0.5952,
+      "true_prevalence": 0.5468
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "80-90%",
+      "n": 697,
+      "recall": 0.8023,
+      "fpr": 0.3343,
+      "flag_rate": 0.5653,
+      "true_prevalence": 0.4935
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "90-100%",
+      "n": 609,
+      "recall": 0.8231,
+      "fpr": 0.2892,
+      "flag_rate": 0.532,
+      "true_prevalence": 0.4548
+    },
+    {
+      "checkpoint": "week_4",
+      "column": "imd_band",
+      "value": "?",
+      "n": 272,
+      "recall": 0.7961,
+      "fpr": 0.3254,
+      "flag_rate": 0.5037,
+      "true_prevalence": 0.3787
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "gender",
+      "value": "F",
+      "n": 3368,
+      "recall": 0.8714,
+      "fpr": 0.4234,
+      "flag_rate": 0.6675,
+      "true_prevalence": 0.5448
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "gender",
+      "value": "M",
+      "n": 4436,
+      "recall": 0.8859,
+      "fpr": 0.3584,
+      "flag_rate": 0.6688,
+      "true_prevalence": 0.5886
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "disability",
+      "value": "N",
+      "n": 7029,
+      "recall": 0.879,
+      "fpr": 0.3799,
+      "flag_rate": 0.6605,
+      "true_prevalence": 0.5622
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "disability",
+      "value": "Y",
+      "n": 775,
+      "recall": 0.8866,
+      "fpr": 0.4769,
+      "flag_rate": 0.7381,
+      "true_prevalence": 0.6374
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "age_band",
+      "value": "0-35",
+      "n": 5581,
+      "recall": 0.8847,
+      "fpr": 0.3982,
+      "flag_rate": 0.6861,
+      "true_prevalence": 0.5918
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "age_band",
+      "value": "35-55",
+      "n": 2187,
+      "recall": 0.8651,
+      "fpr": 0.367,
+      "flag_rate": 0.6237,
+      "true_prevalence": 0.5153
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "age_band",
+      "value": "55<=",
+      "n": 36,
+      "recall": 0.9375,
+      "fpr": 0.35,
+      "flag_rate": 0.6111,
+      "true_prevalence": 0.4444
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "0-10%",
+      "n": 818,
+      "recall": 0.9121,
+      "fpr": 0.523,
+      "flag_rate": 0.7775,
+      "true_prevalence": 0.654
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "10-20",
+      "n": 841,
+      "recall": 0.9124,
+      "fpr": 0.4778,
+      "flag_rate": 0.761,
+      "true_prevalence": 0.6516
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "20-30%",
+      "n": 909,
+      "recall": 0.8842,
+      "fpr": 0.4565,
+      "flag_rate": 0.7327,
+      "true_prevalence": 0.6458
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "30-40%",
+      "n": 855,
+      "recall": 0.8852,
+      "fpr": 0.4087,
+      "flag_rate": 0.6807,
+      "true_prevalence": 0.5708
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "40-50%",
+      "n": 747,
+      "recall": 0.8645,
+      "fpr": 0.3292,
+      "flag_rate": 0.6359,
+      "true_prevalence": 0.573
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "50-60%",
+      "n": 708,
+      "recall": 0.908,
+      "fpr": 0.402,
+      "flag_rate": 0.6893,
+      "true_prevalence": 0.5678
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "60-70%",
+      "n": 686,
+      "recall": 0.8602,
+      "fpr": 0.3376,
+      "flag_rate": 0.621,
+      "true_prevalence": 0.5423
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "70-80%",
+      "n": 662,
+      "recall": 0.8287,
+      "fpr": 0.3833,
+      "flag_rate": 0.6269,
+      "true_prevalence": 0.5468
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "80-90%",
+      "n": 697,
+      "recall": 0.8401,
+      "fpr": 0.3286,
+      "flag_rate": 0.5811,
+      "true_prevalence": 0.4935
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "90-100%",
+      "n": 609,
+      "recall": 0.8664,
+      "fpr": 0.3042,
+      "flag_rate": 0.5599,
+      "true_prevalence": 0.4548
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "?",
+      "n": 272,
+      "recall": 0.8641,
+      "fpr": 0.3077,
+      "flag_rate": 0.5184,
+      "true_prevalence": 0.3787
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "gender",
+      "value": "F",
+      "n": 3368,
+      "recall": 0.9041,
+      "fpr": 0.4468,
+      "flag_rate": 0.696,
+      "true_prevalence": 0.5448
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "gender",
+      "value": "M",
+      "n": 4436,
+      "recall": 0.9249,
+      "fpr": 0.3682,
+      "flag_rate": 0.6959,
+      "true_prevalence": 0.5886
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "disability",
+      "value": "N",
+      "n": 7029,
+      "recall": 0.9157,
+      "fpr": 0.3968,
+      "flag_rate": 0.6886,
+      "true_prevalence": 0.5622
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "disability",
+      "value": "Y",
+      "n": 775,
+      "recall": 0.9211,
+      "fpr": 0.484,
+      "flag_rate": 0.7626,
+      "true_prevalence": 0.6374
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "age_band",
+      "value": "0-35",
+      "n": 5581,
+      "recall": 0.9219,
+      "fpr": 0.4205,
+      "flag_rate": 0.7173,
+      "true_prevalence": 0.5918
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "age_band",
+      "value": "35-55",
+      "n": 2187,
+      "recall": 0.8988,
+      "fpr": 0.3689,
+      "flag_rate": 0.642,
+      "true_prevalence": 0.5153
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "age_band",
+      "value": "55<=",
+      "n": 36,
+      "recall": 1.0,
+      "fpr": 0.4,
+      "flag_rate": 0.6667,
+      "true_prevalence": 0.4444
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "0-10%",
+      "n": 818,
+      "recall": 0.929,
+      "fpr": 0.523,
+      "flag_rate": 0.7885,
+      "true_prevalence": 0.654
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "10-20",
+      "n": 841,
+      "recall": 0.9361,
+      "fpr": 0.5188,
+      "flag_rate": 0.7907,
+      "true_prevalence": 0.6516
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "20-30%",
+      "n": 909,
+      "recall": 0.9063,
+      "fpr": 0.472,
+      "flag_rate": 0.7525,
+      "true_prevalence": 0.6458
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "30-40%",
+      "n": 855,
+      "recall": 0.9221,
+      "fpr": 0.4387,
+      "flag_rate": 0.7146,
+      "true_prevalence": 0.5708
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "40-50%",
+      "n": 747,
+      "recall": 0.9042,
+      "fpr": 0.3793,
+      "flag_rate": 0.6801,
+      "true_prevalence": 0.573
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "50-60%",
+      "n": 708,
+      "recall": 0.9453,
+      "fpr": 0.4085,
+      "flag_rate": 0.7133,
+      "true_prevalence": 0.5678
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "60-70%",
+      "n": 686,
+      "recall": 0.9032,
+      "fpr": 0.3631,
+      "flag_rate": 0.656,
+      "true_prevalence": 0.5423
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "70-80%",
+      "n": 662,
+      "recall": 0.8978,
+      "fpr": 0.3767,
+      "flag_rate": 0.6616,
+      "true_prevalence": 0.5468
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "80-90%",
+      "n": 697,
+      "recall": 0.8953,
+      "fpr": 0.3371,
+      "flag_rate": 0.6126,
+      "true_prevalence": 0.4935
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "90-100%",
+      "n": 609,
+      "recall": 0.9097,
+      "fpr": 0.2861,
+      "flag_rate": 0.5698,
+      "true_prevalence": 0.4548
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "?",
+      "n": 272,
+      "recall": 0.9126,
+      "fpr": 0.3373,
+      "flag_rate": 0.5551,
+      "true_prevalence": 0.3787
+    }
+  ],
+  "calibration_plot": "artifacts\\plots\\calibration_curve.png",
+  "leakage_audit": "features/test_no_leakage.py (passed)"
+}
