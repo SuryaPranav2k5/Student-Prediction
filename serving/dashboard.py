@@ -84,9 +84,7 @@ def main():
     st.subheader("Headline: per-checkpoint PR-AUC (Step 5 comparison)")
     rows = comparison["rows"]
     comp = pd.DataFrame(rows)
-    pivot = comp.pivot(index="model", columns="checkpoint", values="pr_auc")
     ckpts = ["week_4", "week_8", "week_12"]
-    plot_df = pivot.reindex(index=["lgb_pooled (baseline)"] if False else None)
     # Build grouped values: pooled + separate where available
     chart_rows = []
     for cp in ckpts:
@@ -116,15 +114,24 @@ def main():
         if not np.isnan(v):
             ax.text(i + w / 2, v + 0.02, f"{v:.3f}", ha="center", fontsize=9)
     st.pyplot(fig, use_container_width=True)
+
+    # Baseline LR row — read from comparison.json so it can never go stale.
+    lr_rows = comp[comp["model"] == "lr_pooled (baseline)"]
+    if len(lr_rows):
+        lr_map = dict(zip(lr_rows["checkpoint"], lr_rows["pr_auc"]))
+        lr_txt = ", ".join(
+            f"{c.replace('week_', 'week ')} = {lr_map.get(c, float('nan')):.3f}" for c in ckpts
+        )
+        st.caption(f"Baseline LogisticRegression PR-AUC: {lr_txt}. Pooled and separate LightGBM "
+                   "are statistically indistinguishable (differences < 0.002); the pooled model is "
+                   "kept as the production artifact.")
+
     ci_rows = metrics.get("checkpoints", [])
     ci_tbl = pd.DataFrame(ci_rows)
     if not ci_tbl.empty:
         st.write("Pooled model PR-AUC with bootstrap 95% CI (held-out test 2014B):")
         st.dataframe(ci_tbl[["checkpoint", "pr_auc", "pr_auc_ci_lo", "pr_auc_ci_hi", "n"]].round(4),
                      use_container_width=True, hide_index=True)
-    st.caption("Baseline LogisticRegression PR-AUC: week 4 = 0.870, week 8 = 0.903, week 12 = 0.906. "
-               "Pooled and separate LightGBM are statistically indistinguishable (differences < 0.002); "
-               "the pooled model is kept as the production artifact.")
 
     st.markdown("---")
 
@@ -188,6 +195,108 @@ def main():
                            data=X_one.iloc[0].values, feature_names=feature_cols)
     shap.plots.waterfall(exp, max_display=10, show=False)
     st.pyplot(fig, use_container_width=True)
+
+    st.markdown("---")
+
+    # ---- Live what-if: type feature values and watch the score move ----
+    st.subheader("Try it yourself: enter feature values and get a live prediction")
+    st.caption("Any feature you leave at 0 is treated as absent. This is the same model and the same "
+               "SHAP explainer as the FastAPI /predict endpoint — the form is just a friendlier front end.")
+
+    # Defaults come from the currently selected student, so the form starts from a real case.
+    default_row = X_one.iloc[0]
+    KEY_FEATURES = [
+        ("n_missed", "Assessments missed (count)", 0.0, None, 1.0),
+        ("n_assessments_due", "Assessments due by cutoff", 0.0, None, 1.0),
+        ("n_assessments_taken", "Assessments taken", 0.0, None, 1.0),
+        ("frac_missed", "Fraction of assessments missed", 0.0, 1.0, 0.05),
+        ("first_assessment_score", "First assessment score (0-100)", 0.0, 100.0, 1.0),
+        ("second_assessment_score", "Second assessment score (0-100)", 0.0, 100.0, 1.0),
+        ("mean_earliness_days", "Mean days early/late (negative = early)", -60.0, 60.0, 1.0),
+        ("homepage_clicks_total", "VLE homepage clicks (all time)", 0.0, None, 1.0),
+        ("homepage_clicks_last7", "VLE homepage clicks (last 7 days)", 0.0, None, 1.0),
+        ("studied_credits", "Studied credits", 0.0, None, 1.0),
+        ("num_of_prev_attempts", "Previous attempts", 0.0, None, 1.0),
+        ("date_registration", "Registration day (0 = course start)", -200.0, 0.0, 1.0),
+        ("no_assessment_closed", "No assessment closed yet (0/1)", 0.0, 1.0, 1.0),
+    ]
+    preset = st.radio("Preset", ["Selected student", "High-risk example", "Low-risk example"],
+                      horizontal=True)
+
+    hi = {"n_missed": 5.0, "n_assessments_due": 5.0, "n_assessments_taken": 0.0, "frac_missed": 1.0,
+          "first_assessment_score": 0.0, "second_assessment_score": 0.0, "mean_earliness_days": 0.0,
+          "homepage_clicks_total": 0.0, "homepage_clicks_last7": 0.0, "studied_credits": 240.0,
+          "num_of_prev_attempts": 1.0, "date_registration": -120.0, "no_assessment_closed": 0.0}
+    lo = {"n_missed": 0.0, "n_assessments_due": 3.0, "n_assessments_taken": 3.0, "frac_missed": 0.0,
+          "first_assessment_score": 92.0, "second_assessment_score": 88.0, "mean_earliness_days": -4.0,
+          "homepage_clicks_total": 250.0, "homepage_clicks_last7": 40.0, "studied_credits": 60.0,
+          "num_of_prev_attempts": 0.0, "date_registration": -20.0, "no_assessment_closed": 0.0}
+
+    base = default_row if preset == "Selected student" else (hi if preset == "High-risk example" else lo)
+
+    inputs = {}
+    cols = st.columns(3)
+    # Widget keys are scoped to the preset so switching presets re-seeds the
+    # fields with the new defaults. Without this, Streamlit's keyed widget state
+    # persists across the rerun and the inputs silently keep their old values.
+    for i, (key, label, mn, mx, step) in enumerate(KEY_FEATURES):
+        # `base` is a pandas Series for "Selected student" or a dict for the examples.
+        if isinstance(base, dict):
+            val = float(base.get(key, 0.0))
+        else:
+            val = float(base[key]) if key in base.index else 0.0
+        wkey = f"in_{preset}_{key}"
+        with cols[i % 3]:
+            if key == "no_assessment_closed":
+                inputs[key] = 1.0 if st.checkbox(label, value=bool(val), key=wkey) else 0.0
+            else:
+                inputs[key] = st.number_input(label, value=val, min_value=mn, max_value=mx,
+                                              step=step, key=wkey)
+
+    # Everything the form does not expose: for the named examples we start from
+    # zeros so the example is self-contained; for "Selected student" we carry the
+    # student's full profile, otherwise the example features are drowned out.
+    fill_rest = st.checkbox("Start from ALL of the selected student's other features "
+                            "(region, education, engagement lags...) instead of zeros",
+                           value=(preset == "Selected student"))
+
+    if fill_rest:
+        row_vals = [float(default_row[c]) for c in feature_cols]
+    else:
+        row_vals = [0.0 for _ in feature_cols]
+    for k, v in inputs.items():
+        row_vals[feature_cols.index(k)] = float(v)
+
+    X_new = pd.DataFrame([row_vals], columns=feature_cols)
+    X_new = X_new.apply(pd.to_numeric, errors="coerce").fillna(0)
+    p_new = float(model.predict_proba(X_new)[:, 1][0])
+    p_thr = metrics["checkpoints"][2]["operating_threshold"]
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("P(at_risk)", f"{p_new:.3f}")
+    m2.metric("Flag at operating threshold (0.25)?", "YES" if p_new >= p_thr else "no")
+    would = "at-risk" if p_new >= 0.5 else "not at-risk"
+    m3.metric("Above 0.5?", would)
+
+    sv_new = explainer.shap_values(X_new)
+    if isinstance(sv_new, list):
+        sv_new = sv_new[0]
+    shap_new = sv_new[0]
+    order_new = np.argsort(-np.abs(shap_new))[:10]
+    st.write("Top SHAP drivers for YOUR input (positive = pushes toward at-risk):")
+    st.dataframe(pd.DataFrame({
+        "feature": [feature_cols[i] for i in order_new],
+        "shap": [float(shap_new[i]) for i in order_new],
+        "value": [float(X_new.iloc[0, i]) for i in order_new],
+    }).round(4), use_container_width=True, hide_index=True)
+
+    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    shap.plots.waterfall(
+        shap.Explanation(values=shap_new, base_values=expected_value,
+                         data=X_new.iloc[0].values, feature_names=feature_cols),
+        max_display=10, show=False,
+    )
+    st.pyplot(fig2, use_container_width=True)
 
 
 if __name__ == "__main__":

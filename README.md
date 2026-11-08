@@ -225,6 +225,15 @@ curl -X POST http://127.0.0.1:8000/predict \
        "checkpoint_label": "week_12"}'
 ```
 
+**Or use the dashboard form** — the "Try it yourself" section at the bottom of `serving/dashboard.py` exposes the 12 highest-leverage fields as number inputs with three presets, so you can drag values and watch P(at_risk) plus the SHAP waterfall update. Verified:
+
+| Input | P(at_risk) |
+|-------|-----------|
+| Low-risk preset (missed nothing, strong scores, active) | **0.079** |
+| Low-risk preset, then `n_missed` = 5 typed in | **0.344** |
+| ...then `first_assessment_score` = 100 typed in | **0.310** |
+| High-risk preset (missed all 5, no scores, 240 credits) | **0.997** |
+
 Verified responses (both run against the pinned production model):
 
 | Payload | P(at_risk) | Top SHAP driver |
@@ -237,13 +246,19 @@ Note that `gender`, `imd_band`, `age_band` and `disability` are **not accepted a
 ## Serving (Step 8)
 
 - **FastAPI:** `serving/api.py` — `POST /predict` accepts student features and returns `at_risk` probability + SHAP explanation; `GET /health`.
-- **Streamlit:** `serving/dashboard.py` — cohort risk distribution, per-student drill-down with SHAP, and the per-checkpoint PR-AUC comparison chart as the headline visual. Run with `streamlit run serving/dashboard.py`.
+- **Streamlit:** `serving/dashboard.py` - four sections: (1) the per-checkpoint PR-AUC comparison chart from Step 5 as the headline visual, (2) cohort-level risk distribution, (3) per-student drill-down with SHAP explanation, and (4) a **live what-if form** where you type feature values and watch P(at_risk) plus the SHAP breakdown update. Run with `streamlit run serving/dashboard.py`.
 - **Dockerfile:** `Dockerfile` for the FastAPI service.
 - No MLflow. Model artifacts are written twice per run: **versioned** (`artifacts/models/lgb_pooled_<timestamp>.joblib`, the history) and **pinned** (`artifacts/models/lgb_pooled_production.joblib`, a fixed filename that serving, evaluation, SHAP and the dashboard all load). That removes the ambiguity of "whatever timestamp sorts last." A `metrics.json` is written per training run (`artifacts/metrics.json`) with model name, checkpoint, PR-AUC + CI, date, plus the subgroup and fairness tables.
 
 ## What didn't work / honest dead ends
 
-- **Protected attributes leaked into the model feature list.** `gender`, `imd_band`, `age_band` and `disability` were being carried as model features, violating the Step 3 exclusion rule and making the README's claim that they were excluded false. They were silently coerced to constant-zero by `pd.to_numeric(..., errors="coerce")`, so the effect was benign in the strict sense — LightGBM PR-AUC is **bit-identical** before and after the fix (0.8903 / 0.9217 / 0.9416) — but it was a real defect that no test caught. It surfaced only because `serving/make_sample_input.py` crashed on `float('F')`. Now prevented three ways: the columns are dropped physically in the build (with an assert), re-asserted in `models/train.py::feature_columns`, and the sample exporter will fail loudly. **Lesson: a spec-level constraint ("exclude these from model input") was enforced by convention, not by code, and convention failed silently.**
+- **The frontend had never been run until it was tested.** `serving/dashboard.py` was compile-checked and then left alone for most of the project's life. Headlessly rendering it surfaced two real bugs that would each have bitten a user, and one of which my own test initially hid:
+  1. **Presets didn't change the prediction.** All three preset buttons returned P(at_risk) = 0.997. Cause: the number inputs were re-seeded from the preset's defaults, but Streamlit keeps widget state keyed by `key`, so on the rerun triggered by the radio the fields silently retained their old values. Fixed by scoping the widget keys to the preset (`in_{preset}_{feature}`), which is also the correct behaviour in a real browser, not just a test artifact.
+  2. **A dict/Series type error** in the same block (`base.index` on a `dict`) that only fired for the two example presets, never the default one. Fixed with an explicit `isinstance` branch.
+  Both were invisible to a syntax check and would have looked like "the dashboard works" until someone clicked a button. **Lesson: "it compiles" is not "it runs" — the two bugs above lived behind a working default render.**
+- **Protected attributes leaked into the model feature list.** `gender`, `imd_band`, `age_band` and `disability` were being carried as model features, violating the Step 3 exclusion rule and making the README's claim that they were excluded false. They were silently coerced to constant-zero by `pd.to_numeric(..., errors="coerce")`, so the effect was benign in the strict sense — LightGBM PR-AUC is **bit-identical** before and after the fix (0.8903 / 0.9217 / 0.9416) — but it was a real defect that no test caught. It surfaced only because `serving/make_sample_input.py` crashed on `float('F')`. Now prevented three ways: the columns are dropped physically in `features/build_features.py` (with an assert), re-asserted in `models/train.py::feature_columns`, and the API ignores the four attributes entirely. **Lesson: a spec-level constraint ("exclude these from model input") was enforced by convention, not by code, and convention failed silently.**
+- **The mandated baseline was under-converged and under-reported.** `LogisticRegression` hit the `max_iter=1000` limit (unscaled lbfgs on features spanning click counts in the thousands vs scores 0-100), which understated it. With `StandardScaler` + `max_iter=5000` it goes from 0.8440/0.8929/0.9142 to **0.8727/0.9052/0.9251** — and at week 12 it comes within 1.6 points of LightGBM (0.9251 vs 0.9416). A knowingly hobbled baseline would have inflated the main model's apparent advantage, so the scaler is not optional. **Notable takeaway: on this feature set a well-converged linear model is a much stronger baseline than the headline numbers first suggested.**
+- **A hardcoded baseline figure in the dashboard went stale.** The caption quoting the LR PR-AUC was written once and never updated, so it drifted from the real value as the baseline was re-trained. It now reads from `comparison.json`. This is the same failure mode as the metric-choice text that used to justify PR-AUC with "highly imbalanced" after the imbalance direction was corrected — **numbers baked into prose are numbers nobody re-checks.**
 - **The mandated baseline was under-converged and under-reported.** `LogisticRegression` hit the `max_iter=1000` limit (unscaled lbfgs on features spanning click counts in the thousands vs scores 0–100), which understated it. With `StandardScaler` + `max_iter=5000` it goes from 0.8440/0.8929/0.9142 to **0.8727/0.9052/0.9251** — and at week 12 it comes within 1.6 points of LightGBM (0.9251 vs 0.9416). A knowingly hobbled baseline would have inflated the main model's apparent advantage, so the scaler is not optional. **Notable takeaway: on this feature set a well-converged linear model is a much stronger baseline than the headline numbers first suggested.**
 - **Label imbalance assumption wrong:** `at_risk` is near-balanced / majority in OULAD, not the minority as the spec anticipated. Class-rebalancing tools still run but target the actual minority (`not_at_risk`).
 - **Precision = 0.5 operating point is degenerate:** since at_risk is prevalent, flagging everyone clears precision=0.5 for free (recall 100%, precision ~57%). It requires zero model discrimination and cannot trigger a useful intervention. Replaced with precision=0.75 as the primary actionable operating point.
@@ -296,6 +311,20 @@ python serving/test_client.py --full        # use the full 74-feature payload
 
 # Tests
 python -m pytest features/test_no_leakage.py -q    # also runs automatically inside step 1
+
+# Frontend verification (headless — no browser needed)
+python serving/test_dashboard.py                # renders the app, asserts no exceptions
+python serving/test_dashboard_interactive.py    # flips presets, asserts high-risk >> low-risk
+python serving/test_dashboard_manual_input.py   # types into fields, asserts the score moves both ways
 ```
 
-**Not verified:** the `Dockerfile` has not been built in this environment (no Docker available); the FastAPI app and dashboard were exercised in-process only. Treat the image build as the one step to confirm on a machine with Docker.
+**Not verified:** the `Dockerfile` has not been built in this environment (no Docker available). The FastAPI service and the Streamlit dashboard have both been verified, headlessly:
+
+```bash
+python serving/test_dashboard.py               # renders the app, asserts no exceptions
+python serving/test_dashboard_interactive.py   # flips the presets, asserts high-risk >> low-risk
+python serving/test_dashboard_manual_input.py  # types into fields, asserts the score moves both ways
+python -m pytest features/test_no_leakage.py -q
+```
+
+Treat the Docker image build as the one step to confirm on a machine with Docker.
