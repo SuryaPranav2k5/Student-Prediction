@@ -1,88 +1,283 @@
 {
   "model": "lgb_pooled",
   "model_artifact": "lgb_pooled_production.joblib",
-  "date": "2026-11-08",
+  "date": "2026-11-11",
   "checkpoints": [
     {
       "checkpoint": "week_4",
-      "pr_auc": 0.8903,
-      "pr_auc_ci_lo": 0.8833,
-      "pr_auc_ci_hi": 0.8975,
-      "recall_at_precision_75": 0.8266,
+      "pr_auc": 0.8558,
+      "pr_auc_ci_lo": 0.8479,
+      "pr_auc_ci_hi": 0.8633,
+      "recall_at_precision_75": 0.8286,
       "precision_at_operating_point": 0.75,
-      "operating_threshold": 0.3819,
-      "f1_optimal_recall": 0.8133,
-      "f1_optimal_precision": 0.7638,
-      "f1_optimal_threshold": 0.4029,
-      "n": 7804,
-      "n_at_risk": 4446
+      "operating_threshold": 0.3695,
+      "precision": 0.7133,
+      "recall": 0.7827,
+      "f1": 0.7464,
+      "confusion_matrix": [
+        [
+          3631,
+          1826
+        ],
+        [
+          1261,
+          4542
+        ]
+      ],
+      "f1_optimal_recall": 0.8297,
+      "f1_optimal_precision": 0.6833,
+      "f1_optimal_threshold": 0.3193,
+      "n": 11260,
+      "n_at_risk": 5803,
+      "validation_n": 7804
     },
     {
       "checkpoint": "week_8",
-      "pr_auc": 0.9217,
-      "pr_auc_ci_lo": 0.9161,
-      "pr_auc_ci_hi": 0.9277,
-      "recall_at_precision_75": 0.8799,
-      "precision_at_operating_point": 0.75,
-      "operating_threshold": 0.2932,
-      "f1_optimal_recall": 0.8284,
-      "f1_optimal_precision": 0.7996,
-      "f1_optimal_threshold": 0.3734,
-      "n": 7804,
-      "n_at_risk": 4446
+      "pr_auc": 0.8998,
+      "pr_auc_ci_lo": 0.8936,
+      "pr_auc_ci_hi": 0.9058,
+      "recall_at_precision_75": 0.8763,
+      "precision_at_operating_point": 0.7501,
+      "operating_threshold": 0.2855,
+      "precision": 0.7197,
+      "recall": 0.8544,
+      "f1": 0.7813,
+      "confusion_matrix": [
+        [
+          3526,
+          1931
+        ],
+        [
+          845,
+          4958
+        ]
+      ],
+      "f1_optimal_recall": 0.8063,
+      "f1_optimal_precision": 0.7736,
+      "f1_optimal_threshold": 0.3605,
+      "n": 11260,
+      "n_at_risk": 5803,
+      "validation_n": 7804
     },
     {
       "checkpoint": "week_12",
-      "pr_auc": 0.9416,
-      "pr_auc_ci_lo": 0.9371,
-      "pr_auc_ci_hi": 0.9463,
-      "recall_at_precision_75": 0.9163,
+      "pr_auc": 0.9193,
+      "pr_auc_ci_lo": 0.9135,
+      "pr_auc_ci_hi": 0.9242,
+      "recall_at_precision_75": 0.9123,
       "precision_at_operating_point": 0.75,
-      "operating_threshold": 0.2495,
-      "f1_optimal_recall": 0.8423,
-      "f1_optimal_precision": 0.8507,
-      "f1_optimal_threshold": 0.4083,
-      "n": 7804,
-      "n_at_risk": 4446
+      "operating_threshold": 0.234,
+      "precision": 0.7047,
+      "recall": 0.8978,
+      "f1": 0.7896,
+      "confusion_matrix": [
+        [
+          3274,
+          2183
+        ],
+        [
+          593,
+          5210
+        ]
+      ],
+      "f1_optimal_recall": 0.7911,
+      "f1_optimal_precision": 0.8358,
+      "f1_optimal_threshold": 0.4239,
+      "n": 11260,
+      "n_at_risk": 5803,
+      "validation_n": 7804
     }
   ],
-  "overall_pr_auc": 0.92,
+  "overall_pr_auc": 0.894,
+  "course_pr_auc": [
+    {
+      "course": "AAA",
+      "checkpoint": "week_4",
+      "pr_auc": 0.6572,
+      "n": 365,
+      "exception": "no_validation_rows"
+    },
+    {
+      "course": "AAA",
+      "checkpoint": "week_8",
+      "pr_auc": 0.7086,
+      "n": 365,
+      "exception": "no_validation_rows"
+    },
+    {
+      "course": "AAA",
+      "checkpoint": "week_12",
+      "pr_auc": 0.7917,
+      "n": 365,
+      "exception": "no_validation_rows"
+    },
+    {
+      "course": "BBB",
+      "checkpoint": "week_4",
+      "pr_auc": 0.8315,
+      "n": 2292,
+      "exception": NaN
+    },
+    {
+      "course": "BBB",
+      "checkpoint": "week_8",
+      "pr_auc": 0.902,
+      "n": 2292,
+      "exception": NaN
+    },
+    {
+      "course": "BBB",
+      "checkpoint": "week_12",
+      "pr_auc": 0.9027,
+      "n": 2292,
+      "exception": NaN
+    },
+    {
+      "course": "CCC",
+      "checkpoint": "week_4",
+      "pr_auc": 0.8966,
+      "n": 2498,
+      "exception": "zero_shot_no_training_rows"
+    },
+    {
+      "course": "CCC",
+      "checkpoint": "week_8",
+      "pr_auc": 0.9098,
+      "n": 2498,
+      "exception": "zero_shot_no_training_rows"
+    },
+    {
+      "course": "CCC",
+      "checkpoint": "week_12",
+      "pr_auc": 0.9351,
+      "n": 2498,
+      "exception": "zero_shot_no_training_rows"
+    },
+    {
+      "course": "DDD",
+      "checkpoint": "week_4",
+      "pr_auc": 0.8948,
+      "n": 1803,
+      "exception": NaN
+    },
+    {
+      "course": "DDD",
+      "checkpoint": "week_8",
+      "pr_auc": 0.9188,
+      "n": 1803,
+      "exception": NaN
+    },
+    {
+      "course": "DDD",
+      "checkpoint": "week_12",
+      "pr_auc": 0.9266,
+      "n": 1803,
+      "exception": NaN
+    },
+    {
+      "course": "EEE",
+      "checkpoint": "week_4",
+      "pr_auc": 0.8111,
+      "n": 1188,
+      "exception": NaN
+    },
+    {
+      "course": "EEE",
+      "checkpoint": "week_8",
+      "pr_auc": 0.8938,
+      "n": 1188,
+      "exception": NaN
+    },
+    {
+      "course": "EEE",
+      "checkpoint": "week_12",
+      "pr_auc": 0.9263,
+      "n": 1188,
+      "exception": NaN
+    },
+    {
+      "course": "FFF",
+      "checkpoint": "week_4",
+      "pr_auc": 0.8881,
+      "n": 2365,
+      "exception": NaN
+    },
+    {
+      "course": "FFF",
+      "checkpoint": "week_8",
+      "pr_auc": 0.936,
+      "n": 2365,
+      "exception": NaN
+    },
+    {
+      "course": "FFF",
+      "checkpoint": "week_12",
+      "pr_auc": 0.9441,
+      "n": 2365,
+      "exception": NaN
+    },
+    {
+      "course": "GGG",
+      "checkpoint": "week_4",
+      "pr_auc": 0.6311,
+      "n": 749,
+      "exception": NaN
+    },
+    {
+      "course": "GGG",
+      "checkpoint": "week_8",
+      "pr_auc": 0.6424,
+      "n": 749,
+      "exception": NaN
+    },
+    {
+      "course": "GGG",
+      "checkpoint": "week_12",
+      "pr_auc": 0.8357,
+      "n": 749,
+      "exception": NaN
+    }
+  ],
+  "split_exceptions": {
+    "CCC": "No 2013B or 2013J rows; test performance is zero-shot cross-course generalization.",
+    "AAA": "No 2014B rows; threshold/model-selection validation has no AAA-specific rows."
+  },
   "subgroup": [
     {
       "checkpoint": "week_4",
       "true_label": "Withdrawn",
-      "n": 2613,
-      "recall": 0.8768
+      "n": 3826,
+      "recall": 0.8359
     },
     {
       "checkpoint": "week_4",
       "true_label": "Fail",
-      "n": 1833,
-      "recall": 0.755
+      "n": 1977,
+      "recall": 0.6798
     },
     {
       "checkpoint": "week_8",
       "true_label": "Withdrawn",
-      "n": 2613,
-      "recall": 0.9131
+      "n": 3826,
+      "recall": 0.8996
     },
     {
       "checkpoint": "week_8",
       "true_label": "Fail",
-      "n": 1833,
-      "recall": 0.8325
+      "n": 1977,
+      "recall": 0.7668
     },
     {
       "checkpoint": "week_12",
       "true_label": "Withdrawn",
-      "n": 2613,
-      "recall": 0.9453
+      "n": 3826,
+      "recall": 0.9334
     },
     {
       "checkpoint": "week_12",
       "true_label": "Fail",
-      "n": 1833,
-      "recall": 0.8751
+      "n": 1977,
+      "recall": 0.829
     }
   ],
   "fairness": [
@@ -90,541 +285,541 @@
       "checkpoint": "week_4",
       "column": "gender",
       "value": "F",
-      "n": 3368,
-      "recall": 0.8005,
-      "fpr": 0.362,
-      "flag_rate": 0.601,
-      "true_prevalence": 0.5448
+      "n": 4761,
+      "recall": 0.7665,
+      "fpr": 0.3712,
+      "flag_rate": 0.5686,
+      "true_prevalence": 0.4993
     },
     {
       "checkpoint": "week_4",
       "column": "gender",
       "value": "M",
-      "n": 4436,
-      "recall": 0.8449,
-      "fpr": 0.3666,
-      "flag_rate": 0.6481,
-      "true_prevalence": 0.5886
+      "n": 6499,
+      "recall": 0.7939,
+      "fpr": 0.3062,
+      "flag_rate": 0.5633,
+      "true_prevalence": 0.5272
     },
     {
       "checkpoint": "week_4",
       "column": "disability",
       "value": "N",
-      "n": 7029,
-      "recall": 0.8254,
-      "fpr": 0.3572,
-      "flag_rate": 0.6204,
-      "true_prevalence": 0.5622
+      "n": 10183,
+      "recall": 0.7799,
+      "fpr": 0.3309,
+      "flag_rate": 0.5571,
+      "true_prevalence": 0.5038
     },
     {
       "checkpoint": "week_4",
       "column": "disability",
       "value": "Y",
-      "n": 775,
-      "recall": 0.836,
-      "fpr": 0.4448,
-      "flag_rate": 0.6942,
-      "true_prevalence": 0.6374
+      "n": 1077,
+      "recall": 0.8039,
+      "fpr": 0.3812,
+      "flag_rate": 0.6453,
+      "true_prevalence": 0.6249
     },
     {
       "checkpoint": "week_4",
       "column": "age_band",
       "value": "0-35",
-      "n": 5581,
-      "recall": 0.8347,
-      "fpr": 0.3933,
-      "flag_rate": 0.6545,
-      "true_prevalence": 0.5918
+      "n": 7885,
+      "recall": 0.7973,
+      "fpr": 0.354,
+      "flag_rate": 0.5923,
+      "true_prevalence": 0.5375
     },
     {
       "checkpoint": "week_4",
       "column": "age_band",
       "value": "35-55",
-      "n": 2187,
-      "recall": 0.803,
-      "fpr": 0.3,
-      "flag_rate": 0.5592,
-      "true_prevalence": 0.5153
+      "n": 3278,
+      "recall": 0.7441,
+      "fpr": 0.2999,
+      "flag_rate": 0.5064,
+      "true_prevalence": 0.4649
     },
     {
       "checkpoint": "week_4",
       "column": "age_band",
       "value": "55<=",
-      "n": 36,
-      "recall": 0.8125,
-      "fpr": 0.5,
-      "flag_rate": 0.6389,
-      "true_prevalence": 0.4444
+      "n": 97,
+      "recall": 0.7073,
+      "fpr": 0.1607,
+      "flag_rate": 0.3918,
+      "true_prevalence": 0.4227
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "0-10%",
-      "n": 818,
-      "recall": 0.8598,
-      "fpr": 0.4947,
-      "flag_rate": 0.7335,
-      "true_prevalence": 0.654
+      "n": 1104,
+      "recall": 0.7936,
+      "fpr": 0.3822,
+      "flag_rate": 0.6386,
+      "true_prevalence": 0.6232
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "10-20",
-      "n": 841,
-      "recall": 0.8467,
-      "fpr": 0.4608,
-      "flag_rate": 0.7122,
-      "true_prevalence": 0.6516
+      "n": 1198,
+      "recall": 0.8375,
+      "fpr": 0.3201,
+      "flag_rate": 0.6311,
+      "true_prevalence": 0.601
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "20-30%",
-      "n": 909,
-      "recall": 0.8313,
-      "fpr": 0.382,
-      "flag_rate": 0.6722,
-      "true_prevalence": 0.6458
+      "n": 1252,
+      "recall": 0.8017,
+      "fpr": 0.2966,
+      "flag_rate": 0.5895,
+      "true_prevalence": 0.5799
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "30-40%",
-      "n": 855,
-      "recall": 0.8176,
-      "fpr": 0.3733,
-      "flag_rate": 0.6269,
-      "true_prevalence": 0.5708
+      "n": 1200,
+      "recall": 0.7927,
+      "fpr": 0.3805,
+      "flag_rate": 0.5958,
+      "true_prevalence": 0.5225
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "40-50%",
-      "n": 747,
-      "recall": 0.8131,
-      "fpr": 0.3072,
-      "flag_rate": 0.5971,
-      "true_prevalence": 0.573
+      "n": 1147,
+      "recall": 0.787,
+      "fpr": 0.3571,
+      "flag_rate": 0.5824,
+      "true_prevalence": 0.524
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "50-60%",
-      "n": 708,
-      "recall": 0.8483,
-      "fpr": 0.3366,
-      "flag_rate": 0.6271,
-      "true_prevalence": 0.5678
+      "n": 1103,
+      "recall": 0.7726,
+      "fpr": 0.3224,
+      "flag_rate": 0.5485,
+      "true_prevalence": 0.5023
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "60-70%",
-      "n": 686,
-      "recall": 0.8199,
-      "fpr": 0.3471,
-      "flag_rate": 0.6035,
-      "true_prevalence": 0.5423
+      "n": 1043,
+      "recall": 0.7245,
+      "fpr": 0.3418,
+      "flag_rate": 0.5216,
+      "true_prevalence": 0.4698
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "70-80%",
-      "n": 662,
-      "recall": 0.7845,
-      "fpr": 0.3667,
-      "flag_rate": 0.5952,
-      "true_prevalence": 0.5468
+      "n": 1004,
+      "recall": 0.7643,
+      "fpr": 0.3208,
+      "flag_rate": 0.5289,
+      "true_prevalence": 0.4691
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "80-90%",
-      "n": 697,
-      "recall": 0.8023,
-      "fpr": 0.3343,
-      "flag_rate": 0.5653,
-      "true_prevalence": 0.4935
+      "n": 960,
+      "recall": 0.7643,
+      "fpr": 0.3614,
+      "flag_rate": 0.5448,
+      "true_prevalence": 0.4552
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "90-100%",
-      "n": 609,
-      "recall": 0.8231,
-      "fpr": 0.2892,
-      "flag_rate": 0.532,
-      "true_prevalence": 0.4548
+      "n": 854,
+      "recall": 0.7577,
+      "fpr": 0.2926,
+      "flag_rate": 0.4859,
+      "true_prevalence": 0.4157
     },
     {
       "checkpoint": "week_4",
       "column": "imd_band",
       "value": "?",
-      "n": 272,
-      "recall": 0.7961,
-      "fpr": 0.3254,
-      "flag_rate": 0.5037,
-      "true_prevalence": 0.3787
+      "n": 395,
+      "recall": 0.709,
+      "fpr": 0.2797,
+      "flag_rate": 0.4253,
+      "true_prevalence": 0.3392
     },
     {
       "checkpoint": "week_8",
       "column": "gender",
       "value": "F",
-      "n": 3368,
-      "recall": 0.8714,
-      "fpr": 0.4234,
-      "flag_rate": 0.6675,
-      "true_prevalence": 0.5448
+      "n": 4761,
+      "recall": 0.8582,
+      "fpr": 0.4341,
+      "flag_rate": 0.6459,
+      "true_prevalence": 0.4993
     },
     {
       "checkpoint": "week_8",
       "column": "gender",
       "value": "M",
-      "n": 4436,
-      "recall": 0.8859,
-      "fpr": 0.3584,
-      "flag_rate": 0.6688,
-      "true_prevalence": 0.5886
+      "n": 6499,
+      "recall": 0.8517,
+      "fpr": 0.2916,
+      "flag_rate": 0.5869,
+      "true_prevalence": 0.5272
     },
     {
       "checkpoint": "week_8",
       "column": "disability",
       "value": "N",
-      "n": 7029,
-      "recall": 0.879,
-      "fpr": 0.3799,
-      "flag_rate": 0.6605,
-      "true_prevalence": 0.5622
+      "n": 10183,
+      "recall": 0.8491,
+      "fpr": 0.3475,
+      "flag_rate": 0.6002,
+      "true_prevalence": 0.5038
     },
     {
       "checkpoint": "week_8",
       "column": "disability",
       "value": "Y",
-      "n": 775,
-      "recall": 0.8866,
-      "fpr": 0.4769,
-      "flag_rate": 0.7381,
-      "true_prevalence": 0.6374
+      "n": 1077,
+      "recall": 0.8945,
+      "fpr": 0.4332,
+      "flag_rate": 0.7214,
+      "true_prevalence": 0.6249
     },
     {
       "checkpoint": "week_8",
       "column": "age_band",
       "value": "0-35",
-      "n": 5581,
-      "recall": 0.8847,
-      "fpr": 0.3982,
-      "flag_rate": 0.6861,
-      "true_prevalence": 0.5918
+      "n": 7885,
+      "recall": 0.8667,
+      "fpr": 0.3603,
+      "flag_rate": 0.6325,
+      "true_prevalence": 0.5375
     },
     {
       "checkpoint": "week_8",
       "column": "age_band",
       "value": "35-55",
-      "n": 2187,
-      "recall": 0.8651,
-      "fpr": 0.367,
-      "flag_rate": 0.6237,
-      "true_prevalence": 0.5153
+      "n": 3278,
+      "recall": 0.8222,
+      "fpr": 0.3444,
+      "flag_rate": 0.5665,
+      "true_prevalence": 0.4649
     },
     {
       "checkpoint": "week_8",
       "column": "age_band",
       "value": "55<=",
-      "n": 36,
-      "recall": 0.9375,
-      "fpr": 0.35,
-      "flag_rate": 0.6111,
-      "true_prevalence": 0.4444
+      "n": 97,
+      "recall": 0.7805,
+      "fpr": 0.2321,
+      "flag_rate": 0.4639,
+      "true_prevalence": 0.4227
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "0-10%",
-      "n": 818,
-      "recall": 0.9121,
-      "fpr": 0.523,
-      "flag_rate": 0.7775,
-      "true_prevalence": 0.654
+      "n": 1104,
+      "recall": 0.8881,
+      "fpr": 0.4495,
+      "flag_rate": 0.7228,
+      "true_prevalence": 0.6232
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "10-20",
-      "n": 841,
-      "recall": 0.9124,
-      "fpr": 0.4778,
-      "flag_rate": 0.761,
-      "true_prevalence": 0.6516
+      "n": 1198,
+      "recall": 0.8764,
+      "fpr": 0.3619,
+      "flag_rate": 0.6711,
+      "true_prevalence": 0.601
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "20-30%",
-      "n": 909,
-      "recall": 0.8842,
-      "fpr": 0.4565,
-      "flag_rate": 0.7327,
-      "true_prevalence": 0.6458
+      "n": 1252,
+      "recall": 0.8705,
+      "fpr": 0.3422,
+      "flag_rate": 0.6486,
+      "true_prevalence": 0.5799
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "30-40%",
-      "n": 855,
-      "recall": 0.8852,
-      "fpr": 0.4087,
-      "flag_rate": 0.6807,
-      "true_prevalence": 0.5708
+      "n": 1200,
+      "recall": 0.8437,
+      "fpr": 0.3874,
+      "flag_rate": 0.6258,
+      "true_prevalence": 0.5225
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "40-50%",
-      "n": 747,
-      "recall": 0.8645,
-      "fpr": 0.3292,
-      "flag_rate": 0.6359,
-      "true_prevalence": 0.573
+      "n": 1147,
+      "recall": 0.8719,
+      "fpr": 0.4084,
+      "flag_rate": 0.6513,
+      "true_prevalence": 0.524
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "50-60%",
-      "n": 708,
-      "recall": 0.908,
-      "fpr": 0.402,
-      "flag_rate": 0.6893,
-      "true_prevalence": 0.5678
+      "n": 1103,
+      "recall": 0.8484,
+      "fpr": 0.3607,
+      "flag_rate": 0.6056,
+      "true_prevalence": 0.5023
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "60-70%",
-      "n": 686,
-      "recall": 0.8602,
-      "fpr": 0.3376,
-      "flag_rate": 0.621,
-      "true_prevalence": 0.5423
+      "n": 1043,
+      "recall": 0.8224,
+      "fpr": 0.3363,
+      "flag_rate": 0.5647,
+      "true_prevalence": 0.4698
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "70-80%",
-      "n": 662,
-      "recall": 0.8287,
-      "fpr": 0.3833,
-      "flag_rate": 0.6269,
-      "true_prevalence": 0.5468
+      "n": 1004,
+      "recall": 0.8344,
+      "fpr": 0.3246,
+      "flag_rate": 0.5637,
+      "true_prevalence": 0.4691
     },
     {
       "checkpoint": "week_8",
       "column": "imd_band",
       "value": "80-90%",
-      "n": 697,
-      "recall": 0.8401,
-      "fpr": 0.3286,
-      "flag_rate": 0.5811,
-      "true_prevalence": 0.4935
-    },
-    {
-      "checkpoint": "week_8",
-      "column": "imd_band",
-      "value": "90-100%",
-      "n": 609,
-      "recall": 0.8664,
-      "fpr": 0.3042,
-      "flag_rate": 0.5599,
-      "true_prevalence": 0.4548
-    },
-    {
-      "checkpoint": "week_8",
-      "column": "imd_band",
-      "value": "?",
-      "n": 272,
-      "recall": 0.8641,
-      "fpr": 0.3077,
-      "flag_rate": 0.5184,
-      "true_prevalence": 0.3787
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "gender",
-      "value": "F",
-      "n": 3368,
-      "recall": 0.9041,
-      "fpr": 0.4468,
-      "flag_rate": 0.696,
-      "true_prevalence": 0.5448
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "gender",
-      "value": "M",
-      "n": 4436,
-      "recall": 0.9249,
-      "fpr": 0.3682,
-      "flag_rate": 0.6959,
-      "true_prevalence": 0.5886
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "disability",
-      "value": "N",
-      "n": 7029,
-      "recall": 0.9157,
-      "fpr": 0.3968,
-      "flag_rate": 0.6886,
-      "true_prevalence": 0.5622
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "disability",
-      "value": "Y",
-      "n": 775,
-      "recall": 0.9211,
-      "fpr": 0.484,
-      "flag_rate": 0.7626,
-      "true_prevalence": 0.6374
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "age_band",
-      "value": "0-35",
-      "n": 5581,
-      "recall": 0.9219,
-      "fpr": 0.4205,
-      "flag_rate": 0.7173,
-      "true_prevalence": 0.5918
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "age_band",
-      "value": "35-55",
-      "n": 2187,
-      "recall": 0.8988,
-      "fpr": 0.3689,
-      "flag_rate": 0.642,
-      "true_prevalence": 0.5153
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "age_band",
-      "value": "55<=",
-      "n": 36,
-      "recall": 1.0,
-      "fpr": 0.4,
-      "flag_rate": 0.6667,
-      "true_prevalence": 0.4444
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "0-10%",
-      "n": 818,
-      "recall": 0.929,
-      "fpr": 0.523,
-      "flag_rate": 0.7885,
-      "true_prevalence": 0.654
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "10-20",
-      "n": 841,
-      "recall": 0.9361,
-      "fpr": 0.5188,
-      "flag_rate": 0.7907,
-      "true_prevalence": 0.6516
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "20-30%",
-      "n": 909,
-      "recall": 0.9063,
-      "fpr": 0.472,
-      "flag_rate": 0.7525,
-      "true_prevalence": 0.6458
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "30-40%",
-      "n": 855,
-      "recall": 0.9221,
-      "fpr": 0.4387,
-      "flag_rate": 0.7146,
-      "true_prevalence": 0.5708
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "40-50%",
-      "n": 747,
-      "recall": 0.9042,
-      "fpr": 0.3793,
-      "flag_rate": 0.6801,
-      "true_prevalence": 0.573
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "50-60%",
-      "n": 708,
-      "recall": 0.9453,
-      "fpr": 0.4085,
-      "flag_rate": 0.7133,
-      "true_prevalence": 0.5678
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "60-70%",
-      "n": 686,
-      "recall": 0.9032,
-      "fpr": 0.3631,
-      "flag_rate": 0.656,
-      "true_prevalence": 0.5423
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "70-80%",
-      "n": 662,
-      "recall": 0.8978,
-      "fpr": 0.3767,
-      "flag_rate": 0.6616,
-      "true_prevalence": 0.5468
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "80-90%",
-      "n": 697,
-      "recall": 0.8953,
-      "fpr": 0.3371,
-      "flag_rate": 0.6126,
-      "true_prevalence": 0.4935
-    },
-    {
-      "checkpoint": "week_12",
-      "column": "imd_band",
-      "value": "90-100%",
-      "n": 609,
-      "recall": 0.9097,
-      "fpr": 0.2861,
+      "n": 960,
+      "recall": 0.8284,
+      "fpr": 0.3537,
       "flag_rate": 0.5698,
-      "true_prevalence": 0.4548
+      "true_prevalence": 0.4552
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "90-100%",
+      "n": 854,
+      "recall": 0.8592,
+      "fpr": 0.2866,
+      "flag_rate": 0.5246,
+      "true_prevalence": 0.4157
+    },
+    {
+      "checkpoint": "week_8",
+      "column": "imd_band",
+      "value": "?",
+      "n": 395,
+      "recall": 0.7313,
+      "fpr": 0.2337,
+      "flag_rate": 0.4025,
+      "true_prevalence": 0.3392
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "gender",
+      "value": "F",
+      "n": 4761,
+      "recall": 0.9024,
+      "fpr": 0.4769,
+      "flag_rate": 0.6894,
+      "true_prevalence": 0.4993
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "gender",
+      "value": "M",
+      "n": 6499,
+      "recall": 0.8946,
+      "fpr": 0.3404,
+      "flag_rate": 0.6326,
+      "true_prevalence": 0.5272
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "disability",
+      "value": "N",
+      "n": 10183,
+      "recall": 0.8936,
+      "fpr": 0.3934,
+      "flag_rate": 0.6454,
+      "true_prevalence": 0.5038
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "disability",
+      "value": "Y",
+      "n": 1077,
+      "recall": 0.9302,
+      "fpr": 0.4827,
+      "flag_rate": 0.7623,
+      "true_prevalence": 0.6249
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "age_band",
+      "value": "0-35",
+      "n": 7885,
+      "recall": 0.9101,
+      "fpr": 0.4132,
+      "flag_rate": 0.6803,
+      "true_prevalence": 0.5375
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "age_band",
+      "value": "35-55",
+      "n": 3278,
+      "recall": 0.8655,
+      "fpr": 0.3763,
+      "flag_rate": 0.6037,
+      "true_prevalence": 0.4649
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "age_band",
+      "value": "55<=",
+      "n": 97,
+      "recall": 0.8293,
+      "fpr": 0.2857,
+      "flag_rate": 0.5155,
+      "true_prevalence": 0.4227
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "0-10%",
+      "n": 1104,
+      "recall": 0.9273,
+      "fpr": 0.4904,
+      "flag_rate": 0.7627,
+      "true_prevalence": 0.6232
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "10-20",
+      "n": 1198,
+      "recall": 0.9194,
+      "fpr": 0.4331,
+      "flag_rate": 0.7254,
+      "true_prevalence": 0.601
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "20-30%",
+      "n": 1252,
+      "recall": 0.9091,
+      "fpr": 0.4068,
+      "flag_rate": 0.6981,
+      "true_prevalence": 0.5799
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "30-40%",
+      "n": 1200,
+      "recall": 0.89,
+      "fpr": 0.4293,
+      "flag_rate": 0.67,
+      "true_prevalence": 0.5225
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "40-50%",
+      "n": 1147,
+      "recall": 0.9101,
+      "fpr": 0.4341,
+      "flag_rate": 0.6835,
+      "true_prevalence": 0.524
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "50-60%",
+      "n": 1103,
+      "recall": 0.8917,
+      "fpr": 0.4007,
+      "flag_rate": 0.6473,
+      "true_prevalence": 0.5023
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "60-70%",
+      "n": 1043,
+      "recall": 0.8755,
+      "fpr": 0.3852,
+      "flag_rate": 0.6155,
+      "true_prevalence": 0.4698
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "70-80%",
+      "n": 1004,
+      "recall": 0.8832,
+      "fpr": 0.3508,
+      "flag_rate": 0.6006,
+      "true_prevalence": 0.4691
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "80-90%",
+      "n": 960,
+      "recall": 0.8787,
+      "fpr": 0.4245,
+      "flag_rate": 0.6312,
+      "true_prevalence": 0.4552
+    },
+    {
+      "checkpoint": "week_12",
+      "column": "imd_band",
+      "value": "90-100%",
+      "n": 854,
+      "recall": 0.893,
+      "fpr": 0.3287,
+      "flag_rate": 0.5632,
+      "true_prevalence": 0.4157
     },
     {
       "checkpoint": "week_12",
       "column": "imd_band",
       "value": "?",
-      "n": 272,
-      "recall": 0.9126,
-      "fpr": 0.3373,
-      "flag_rate": 0.5551,
-      "true_prevalence": 0.3787
+      "n": 395,
+      "recall": 0.7836,
+      "fpr": 0.2644,
+      "flag_rate": 0.4405,
+      "true_prevalence": 0.3392
     }
   ],
   "calibration_plot": "artifacts\\plots\\calibration_curve.png",

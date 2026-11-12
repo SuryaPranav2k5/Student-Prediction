@@ -25,6 +25,22 @@ st.set_page_config(page_title="OULAD At-Risk Prediction", layout="wide")
 
 PLOTS = Path("artifacts/plots")
 
+# The score is decision SUPPORT, never a decision.
+HUMAN_REVIEW_NOTE = (
+    "Advisory only. Every flag must be reviewed by a human advisor before any "
+    "action, and must never trigger automated grading, punishment or admission "
+    "decisions."
+)
+
+
+def risk_band(prob: float, threshold: float) -> str:
+    """Advisory band anchored to the validation-selected operating threshold."""
+    if prob >= threshold:
+        return "High"
+    if prob >= 0.5 * threshold:
+        return "Moderate"
+    return "Low"
+
 
 @st.cache_resource
 def load_model():
@@ -74,62 +90,59 @@ def main():
     test, metrics, comparison = load_data()
 
     st.title("OULAD Student At-Risk Prediction")
-    st.caption("Binary at-risk (Withdrawn/Fail) prediction at week 4 / 8 / 12 checkpoints. Held-out test: 2014B.")
+    st.caption("Binary at-risk (Withdrawn/Fail) prediction at week 4 / 8 / 12 checkpoints. Held-out test: 2014J.")
+    st.info(HUMAN_REVIEW_NOTE)
 
     if model is None:
         st.error("No model artifact found. Run `python models/train.py` first.")
         return
 
     # ---- Headline: per-checkpoint PR-AUC comparison ----
-    st.subheader("Headline: per-checkpoint PR-AUC (Step 5 comparison)")
+    st.subheader("Test-set model comparison by checkpoint")
     rows = comparison["rows"]
     comp = pd.DataFrame(rows)
+    test_comp = comp[comp["split"] == "test"]
     ckpts = ["week_4", "week_8", "week_12"]
-    # Build grouped values: pooled + separate where available
-    chart_rows = []
-    for cp in ckpts:
-        pooled = comp[(comp["model"] == "lgb_pooled") & (comp["checkpoint"] == cp)]["pr_auc"]
-        sep = comp[comp["model"] == f"lgb_{cp} (separate)"]["pr_auc"]
-        chart_rows.append({"checkpoint": cp, "model": "Pooled LightGBM",
-                           "pr_auc": float(pooled.iloc[0]) if len(pooled) else np.nan})
-        if len(sep):
-            chart_rows.append({"checkpoint": cp, "model": f"Separate ({cp})",
-                               "pr_auc": float(sep.iloc[0])})
-    chart = pd.DataFrame(chart_rows)
+    # Build grouped values: pooled LightGBM, RandomForest, and the separate
+    # per-checkpoint LightGBM (which only has a value for its own checkpoint).
+    def _pr(model: str, cp: str) -> float:
+        s = test_comp[(test_comp["model"] == model) & (test_comp["checkpoint"] == cp)]["pr_auc"]
+        return float(s.iloc[0]) if len(s) else np.nan
 
-    fig, ax = plt.subplots(figsize=(7, 4))
-    x = np.arange(len(ckpts)); w = 0.35
-    pooled_vals = [chart[(chart.checkpoint == cp) & (chart.model == "Pooled LightGBM")]["pr_auc"].iloc[0] for cp in ckpts]
-    sep_vals = [chart[(chart.checkpoint == cp) & (chart.model == f"Separate ({cp})")]["pr_auc"].iloc[0]
-                if len(chart[(chart.checkpoint == cp) & (chart.model == f"Separate ({cp})")]) else np.nan
-                for cp in ckpts]
-    ax.bar(x - w / 2, pooled_vals, w, label="Pooled LightGBM", color="#1f77b4")
-    ax.bar(x + w / 2, sep_vals, w, label="Separate per-checkpoint", color="#ff7f0e", alpha=0.8)
+    series = [
+        ("Pooled LightGBM", "#1f77b4", lambda cp: _pr("lgb_pooled", cp)),
+        ("RandomForest", "#2ca02c", lambda cp: _pr("rf_pooled (random forest)", cp)),
+        ("Separate per-checkpoint", "#ff7f0e", lambda cp: _pr(f"lgb_{cp} (separate)", cp)),
+    ]
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    x = np.arange(len(ckpts)); w = 0.26
+    for i, (name, color, value_of) in enumerate(series):
+        vals = [value_of(cp) for cp in ckpts]
+        offset = (i - 1) * w
+        ax.bar(x + offset, vals, w, label=name, color=color, alpha=0.9)
+        for xi, v in zip(x, vals):
+            if not np.isnan(v):
+                ax.text(xi + offset, v + 0.02, f"{v:.3f}", ha="center", fontsize=8)
     ax.set_xticks(x); ax.set_xticklabels(["Week 4", "Week 8", "Week 12"])
     ax.set_ylabel("PR-AUC"); ax.set_ylim(0, 1)
-    ax.legend(); ax.grid(axis="y", alpha=0.3)
-    for i, v in enumerate(pooled_vals):
-        ax.text(i - w / 2, v + 0.02, f"{v:.3f}", ha="center", fontsize=9)
-    for i, v in enumerate(sep_vals):
-        if not np.isnan(v):
-            ax.text(i + w / 2, v + 0.02, f"{v:.3f}", ha="center", fontsize=9)
+    ax.legend(fontsize=8); ax.grid(axis="y", alpha=0.3)
     st.pyplot(fig, use_container_width=True)
 
     # Baseline LR row — read from comparison.json so it can never go stale.
-    lr_rows = comp[comp["model"] == "lr_pooled (baseline)"]
+    lr_rows = test_comp[test_comp["model"] == "lr_pooled (baseline)"]
     if len(lr_rows):
         lr_map = dict(zip(lr_rows["checkpoint"], lr_rows["pr_auc"]))
         lr_txt = ", ".join(
             f"{c.replace('week_', 'week ')} = {lr_map.get(c, float('nan')):.3f}" for c in ckpts
         )
-        st.caption(f"Baseline LogisticRegression PR-AUC: {lr_txt}. Pooled and separate LightGBM "
-                   "are statistically indistinguishable (differences < 0.002); the pooled model is "
-                   "kept as the production artifact.")
+        st.caption(f"Baseline LogisticRegression PR-AUC on test data: {lr_txt}. "
+                   "The pooled LightGBM is the production model.")
 
     ci_rows = metrics.get("checkpoints", [])
     ci_tbl = pd.DataFrame(ci_rows)
     if not ci_tbl.empty:
-        st.write("Pooled model PR-AUC with bootstrap 95% CI (held-out test 2014B):")
+        st.write("Pooled model PR-AUC with bootstrap 95% CI (held-out test 2014J):")
         st.dataframe(ci_tbl[["checkpoint", "pr_auc", "pr_auc_ci_lo", "pr_auc_ci_hi", "n"]].round(4),
                      use_container_width=True, hide_index=True)
 
@@ -175,6 +188,9 @@ def main():
     c1.metric("P(at_risk)", f"{prob:.3f}")
     c2.metric("True label", true_label)
     c3.metric("True at_risk", f"{true_at_risk} (1=Withdrawn/Fail)")
+    cp_thr = next(r["operating_threshold"] for r in metrics["checkpoints"] if r["checkpoint"] == cp_choice)
+    st.write(f"Advisory risk band: **{risk_band(prob, cp_thr)}** "
+             f"(anchored to the {cp_choice} operating threshold {cp_thr:.3f}).")
 
     sv = explainer.shap_values(X_one)
     if isinstance(sv, list):
@@ -270,13 +286,15 @@ def main():
     X_new = pd.DataFrame([row_vals], columns=feature_cols)
     X_new = X_new.apply(pd.to_numeric, errors="coerce").fillna(0)
     p_new = float(model.predict_proba(X_new)[:, 1][0])
-    p_thr = metrics["checkpoints"][2]["operating_threshold"]
+    threshold_row = next(
+        row for row in metrics["checkpoints"] if row["checkpoint"] == cp_choice
+    )
+    p_thr = threshold_row["operating_threshold"]
 
     m1, m2, m3 = st.columns(3)
     m1.metric("P(at_risk)", f"{p_new:.3f}")
-    m2.metric("Flag at operating threshold (0.25)?", "YES" if p_new >= p_thr else "no")
-    would = "at-risk" if p_new >= 0.5 else "not at-risk"
-    m3.metric("Above 0.5?", would)
+    m2.metric(f"Flag at operating threshold ({p_thr:.3f})?", "YES" if p_new >= p_thr else "no")
+    m3.metric("Advisory risk band", risk_band(p_new, p_thr))
 
     sv_new = explainer.shap_values(X_new)
     if isinstance(sv_new, list):

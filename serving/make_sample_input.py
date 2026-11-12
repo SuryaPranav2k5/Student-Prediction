@@ -1,7 +1,7 @@
 """Export a real feature vector to JSON so the API can be tested by hand.
 
 Writes two files:
-  artifacts/sample_input.json        -> one real student's full 78-feature vector
+  artifacts/sample_input.json        -> one real student's full 74-feature vector
   artifacts/sample_input_min.json    -> minimal partial payload (API fills the rest with 0)
 
 Usage: python serving/make_sample_input.py

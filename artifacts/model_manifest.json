@@ -1,33 +1,39 @@
 {
-  "timestamp": "20261108_224323",
+  "timestamp": "20261111_204402",
   "models": [
     {
       "name": "lr_pooled",
-      "path": "lr_pooled_20261108_224323.joblib",
+      "path": "lr_pooled_20261111_204402.joblib",
       "checkpoint": "pooled",
       "strategy": "baseline"
     },
     {
       "name": "lgb_pooled",
-      "path": "lgb_pooled_20261108_224323.joblib",
+      "path": "lgb_pooled_20261111_204402.joblib",
       "checkpoint": "pooled",
       "strategy": "pooled"
     },
     {
+      "name": "rf_pooled",
+      "path": "rf_pooled_20261111_204402.joblib",
+      "checkpoint": "pooled",
+      "strategy": "random_forest"
+    },
+    {
       "name": "lgb_week_4",
-      "path": "lgb_week_4_20261108_224323.joblib",
+      "path": "lgb_week_4_20261111_204402.joblib",
       "checkpoint": "week_4",
       "strategy": "separate"
     },
     {
       "name": "lgb_week_8",
-      "path": "lgb_week_8_20261108_224323.joblib",
+      "path": "lgb_week_8_20261111_204402.joblib",
       "checkpoint": "week_8",
       "strategy": "separate"
     },
     {
       "name": "lgb_week_12",
-      "path": "lgb_week_12_20261108_224323.joblib",
+      "path": "lgb_week_12_20261111_204402.joblib",
       "checkpoint": "week_12",
       "strategy": "separate"
     }

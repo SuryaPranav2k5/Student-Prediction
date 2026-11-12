@@ -32,12 +32,13 @@ from common import (
     LABEL_MAP,
     PROCESSED,
     TRAIN_PRESENTATIONS,
+    VALIDATION_PRESENTATION,
     TEST_PRESENTATION,
     add_module_presentation,
     ensure_dirs,
     load_tables,
     make_at_risk,
-    split_train_test,
+    split_train_validation_test,
     to_day,
 )
 
@@ -195,10 +196,11 @@ def build_features(raw: Path = Path("data/raw")) -> pd.DataFrame:
     cutoffs = pd.read_parquet(PROCESSED / "cutoffs.parquet")
 
     student_info["at_risk"] = make_at_risk(student_info["final_result"])
-    train, test = split_train_test(student_info)
+    train, validation, test = split_train_validation_test(student_info)
     train["split"] = "train"
+    validation["split"] = "validation"
     test["split"] = "test"
-    all_students = pd.concat([train, test], ignore_index=True)
+    all_students = pd.concat([train, validation, test], ignore_index=True)
 
     # Fairness table (never model input), keyed by student_id.
     fairness = all_students[["id_student", "module_presentation"] + FAIRNESS_COLUMNS].copy()
@@ -247,6 +249,10 @@ def build_features(raw: Path = Path("data/raw")) -> pd.DataFrame:
         feat["frac_missed"] = np.where(
             feat["n_assessments_due"] > 0, feat["n_missed"] / feat["n_assessments_due"], 0.0
         )
+        # Capture missingness BEFORE the zero-fill on the next line: the
+        # indicator must describe the raw column ("no assessment taken"), not
+        # the already-filled one, or it is constant zero by construction.
+        first_score_missing = feat["first_assessment_score"].isna().astype(int)
         feat["first_assessment_score"] = feat["first_assessment_score"].fillna(0)
         feat["second_assessment_score"] = feat["second_assessment_score"].fillna(0)
         feat["score_delta"] = feat["score_delta"].fillna(0)
@@ -257,7 +263,7 @@ def build_features(raw: Path = Path("data/raw")) -> pd.DataFrame:
 
         # Missingness indicators for sparse derived features (informative, not imputed).
         feat["engagement_lag_missing"] = feat["engagement_lag_mean"].isna().astype(int)
-        feat["first_score_missing"] = feat["first_assessment_score"].isna().astype(int)
+        feat["first_score_missing"] = first_score_missing
 
         frames.append(feat)
 
@@ -296,7 +302,11 @@ def build_features(raw: Path = Path("data/raw")) -> pd.DataFrame:
     fairness.to_parquet(fair_out, index=False)
 
     print("=== Step 2: label construction (at_risk = Withdrawn or Fail) ===")
-    for name, d in [("train (2013J+2014J)", train), ("test (2014B)", test)]:
+    for name, d in [
+        ("train (2013B+2013J)", train),
+        ("validation (2014B)", validation),
+        ("test (2014J)", test),
+    ]:
         n = len(d)
         pos = int(d["at_risk"].sum())
         print(f"{name}: n={n} at_risk={pos} ({pos/n:.4f})  not_at_risk={n-pos}")
@@ -305,7 +315,7 @@ def build_features(raw: Path = Path("data/raw")) -> pd.DataFrame:
     print("feature rows:", len(features), "| columns:", features.shape[1])
     print("by checkpoint:")
     print(features.groupby("checkpoint_label").size())
-    print("excluded courses per checkpoint honoured (EEE/GGG early checkpoints dropped).")
+    print("All course rows retained at every checkpoint; no-assessment cases are flagged.")
     print("Wrote", feat_out)
     print("Wrote", fair_out)
 

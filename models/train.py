@@ -3,12 +3,14 @@
 Trains and compares, on the SAME feature set:
   * Baseline (mandatory): LogisticRegression(class_weight='balanced')
   * Main: LightGBM (objective=binary, is_unbalance=True), no SMOTE.
+  * Second algorithm family: RandomForest(class_weight='balanced').
 
 Two LightGBM strategies:
   (a) pooled model across all checkpoints with week_elapsed as a feature
   (b) three separate models, one per checkpoint
 
-Evaluates PR-AUC per checkpoint on the held-out test set (2014B).
+Uses 2014B for validation comparisons and evaluates the final held-out test set
+(2014J) separately.
 Saves versioned model artifacts to artifacts/models/.
 """
 
@@ -29,12 +31,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from lightgbm import LGBMClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from common import ARTIFACTS, MODELS, PROCESSED, TEST_PRESENTATION, FAIRNESS_COLUMNS
+from common import ARTIFACTS, MODELS, PROCESSED, FAIRNESS_COLUMNS
 
 RANDOM_SEED = 42
 
@@ -76,8 +79,9 @@ def pr_auc(y_true, y_score) -> float:
 def train_and_evaluate(features_path: Path = PROCESSED / "features.parquet") -> dict:
     features = pd.read_parquet(features_path)
     train = features[features["split"] == "train"].copy()
+    validation = features[features["split"] == "validation"].copy()
     test = features[features["split"] == "test"].copy()
-    print(f"train rows={len(train)} test rows={len(test)}")
+    print(f"train rows={len(train)} validation rows={len(validation)} test rows={len(test)}")
 
     results = []
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -99,14 +103,16 @@ def train_and_evaluate(features_path: Path = PROCESSED / "features.parquet") -> 
     joblib.dump(lr, MODEL_DIR / f"lr_pooled_{timestamp}.joblib")
     manifest["models"].append({"name": "lr_pooled", "path": f"lr_pooled_{timestamp}.joblib",
                                "checkpoint": "pooled", "strategy": "baseline"})
-    for cp in ["week_4", "week_8", "week_12"]:
-        te = test[test["checkpoint_label"] == cp]
-        if te.empty:
-            continue
-        Xte, yte = prep(te, cols_lr)
-        score = lr.predict_proba(Xte)[:, 1]
-        results.append({"model": "lr_pooled (baseline)", "checkpoint": cp, "pr_auc": pr_auc(yte, score),
-                        "n": len(te)})
+    for split_name, split_df in [("validation", validation), ("test", test)]:
+        for cp in ["week_4", "week_8", "week_12"]:
+            te = split_df[split_df["checkpoint_label"] == cp]
+            if te.empty:
+                continue
+            Xte, yte = prep(te, cols_lr)
+            score = lr.predict_proba(Xte)[:, 1]
+            results.append({"model": "lr_pooled (baseline)", "split": split_name,
+                            "checkpoint": cp, "pr_auc": pr_auc(yte, score),
+                            "n": len(te)})
 
     # ---- LightGBM pooled (week_elapsed feature) ----
     cols_lgb = feature_columns(features, include_week_elapsed=True)
@@ -121,13 +127,41 @@ def train_and_evaluate(features_path: Path = PROCESSED / "features.parquet") -> 
     feature_list = list(cols_lgb)
     with open(MODEL_DIR / f"lgb_pooled_{timestamp}_features.json", "w") as fh:
         json.dump(feature_list, fh)
-    for cp in ["week_4", "week_8", "week_12"]:
-        te = test[test["checkpoint_label"] == cp]
-        if te.empty:
-            continue
-        Xte, yte = prep(te, cols_lgb)
-        score = lgb_pooled.predict_proba(Xte)[:, 1]
-        results.append({"model": "lgb_pooled", "checkpoint": cp, "pr_auc": pr_auc(yte, score), "n": len(te)})
+    for split_name, split_df in [("validation", validation), ("test", test)]:
+        for cp in ["week_4", "week_8", "week_12"]:
+            te = split_df[split_df["checkpoint_label"] == cp]
+            if te.empty:
+                continue
+            Xte, yte = prep(te, cols_lgb)
+            score = lgb_pooled.predict_proba(Xte)[:, 1]
+            results.append({"model": "lgb_pooled", "split": split_name,
+                            "checkpoint": cp, "pr_auc": pr_auc(yte, score),
+                            "n": len(te)})
+
+    # ---- RandomForest (second algorithm family) ----
+    # A bagged tree ensemble is a genuinely different bias/variance profile from
+    # both the linear baseline and the boosted trees, so this is the "second
+    # reasonable model" the brief asks for -- not another LightGBM variant.
+    cols_rf = feature_columns(features, include_week_elapsed=True)
+    Xtr, ytr = prep(train, cols_rf)
+    rf = RandomForestClassifier(
+        n_estimators=300, class_weight="balanced", random_state=RANDOM_SEED,
+        n_jobs=-1, min_samples_leaf=2,
+    )
+    rf.fit(Xtr, ytr)
+    joblib.dump(rf, MODEL_DIR / f"rf_pooled_{timestamp}.joblib")
+    manifest["models"].append({"name": "rf_pooled", "path": f"rf_pooled_{timestamp}.joblib",
+                               "checkpoint": "pooled", "strategy": "random_forest"})
+    for split_name, split_df in [("validation", validation), ("test", test)]:
+        for cp in ["week_4", "week_8", "week_12"]:
+            te = split_df[split_df["checkpoint_label"] == cp]
+            if te.empty:
+                continue
+            Xte, yte = prep(te, cols_rf)
+            score = rf.predict_proba(Xte)[:, 1]
+            results.append({"model": "rf_pooled (random forest)", "split": split_name,
+                            "checkpoint": cp, "pr_auc": pr_auc(yte, score),
+                            "n": len(te)})
 
     # ---- LightGBM separate per-checkpoint ----
     for cp in ["week_4", "week_8", "week_12"]:
@@ -149,11 +183,16 @@ def train_and_evaluate(features_path: Path = PROCESSED / "features.parquet") -> 
         manifest["models"].append({"name": f"lgb_{cp}", "path": fname,
                                    "checkpoint": cp, "strategy": "separate"})
         score = lgb.predict_proba(Xte)[:, 1]
-        results.append({"model": f"lgb_{cp} (separate)", "checkpoint": cp, "pr_auc": pr_auc(yte, score), "n": len(te)})
+        results.append({"model": f"lgb_{cp} (separate)", "split": "test",
+                        "checkpoint": cp, "pr_auc": pr_auc(yte, score), "n": len(te)})
 
     res = pd.DataFrame(results)
-    print("\n=== Step 5: PR-AUC comparison (test set, held-out 2014B) ===")
-    print(res.pivot(index="model", columns="checkpoint", values="pr_auc").round(4).to_string())
+    print("\n=== Step 5: PR-AUC comparison ===")
+    print(res[res["split"] == "validation"].pivot(index="model", columns="checkpoint",
+          values="pr_auc").round(4).to_string())
+    print("\nHeld-out test results:")
+    print(res[res["split"] == "test"].pivot(index="model", columns="checkpoint",
+          values="pr_auc").round(4).to_string())
     print()
     print("per-checkpoint counts:")
     print(res.groupby("checkpoint")["n"].first().to_string())
@@ -182,7 +221,11 @@ def train_and_evaluate(features_path: Path = PROCESSED / "features.parquet") -> 
     comparison = {
         "timestamp": timestamp,
         "rows": res.round(6).to_dict("records"),
-        "pivot": res.pivot(index="model", columns="checkpoint", values="pr_auc").round(6).to_dict(),
+        "pivot": {
+            split_name: split_df.pivot(index="model", columns="checkpoint", values="pr_auc")
+            .round(6).to_dict()
+            for split_name, split_df in res.groupby("split")
+        },
     }
     with open(ARTIFACTS / "comparison.json", "w") as fh:
         json.dump(comparison, fh, indent=2)

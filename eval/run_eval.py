@@ -28,7 +28,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.calibration import calibration_curve
-from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.metrics import (
+    average_precision_score,
+    confusion_matrix,
+    f1_score,
+    precision_recall_curve,
+    precision_score,
+    recall_score,
+)
 
 from common import ARTIFACTS, MODELS, PROCESSED, FAIRNESS_COLUMNS
 
@@ -103,7 +110,19 @@ def operating_point(y_true, y_score):
     }
 
 
-def evaluate(model, feature_cols, test, ts):
+def evaluate(model, feature_cols, validation, test, ts):
+    validation_ops = {}
+    for cp in CHECKPOINTS:
+        va = validation[validation["checkpoint_label"] == cp].copy()
+        if va.empty:
+            continue
+        X = va[feature_cols].copy()
+        for c in X.columns:
+            X[c] = pd.to_numeric(X[c], errors="coerce")
+        y = va["at_risk"].values.astype(int)
+        score = model.predict_proba(X.fillna(0))[:, 1]
+        validation_ops[cp] = operating_point(y, score)
+
     rows = []
     for cp in CHECKPOINTS:
         te = test[test["checkpoint_label"] == cp].copy()
@@ -118,8 +137,12 @@ def evaluate(model, feature_cols, test, ts):
 
         auc = pr_auc(y, score)
         lo, hi = bootstrap_ci(y, score)
-        op = operating_point(y, score)
+        op = validation_ops.get(cp)
+        if op is None:
+            raise RuntimeError(f"no validation rows available for checkpoint {cp}")
         y_pred = (score >= op["threshold"]).astype(int)
+        cm = confusion_matrix(y, y_pred, labels=[0, 1])
+        test_op = operating_point(y, score)
 
         rows.append({
             "checkpoint": cp, "model": "lgb_pooled",
@@ -128,9 +151,16 @@ def evaluate(model, feature_cols, test, ts):
             f"recall_at_precision_{int(PRECISION_TARGET*100)}": round(op["recall"], 4),
             "precision_at_operating_point": round(op["precision"], 4),
             "operating_threshold": round(op["threshold"], 4),
-            "f1_optimal_recall": round(op["f1_recall"], 4),
-            "f1_optimal_precision": round(op["f1_precision"], 4),
-            "f1_optimal_threshold": round(op["f1_threshold"], 4),
+            "precision": round(float(precision_score(y, y_pred, zero_division=0)), 4),
+            "recall": round(float(recall_score(y, y_pred, zero_division=0)), 4),
+            "f1": round(float(f1_score(y, y_pred, zero_division=0)), 4),
+            "confusion_matrix": cm.tolist(),
+            "f1_optimal_recall": round(test_op["f1_recall"], 4),
+            "f1_optimal_precision": round(test_op["f1_precision"], 4),
+            "f1_optimal_threshold": round(test_op["f1_threshold"], 4),
+            "validation_n": int(
+                len(validation[validation["checkpoint_label"] == cp])
+            ),
         })
 
     return pd.DataFrame(rows)
@@ -139,9 +169,40 @@ def evaluate(model, feature_cols, test, ts):
 def main():
     model, feature_cols, ts = latest_pooled_model()
     features = pd.read_parquet(PROCESSED / "features.parquet")
+    validation = features[features["split"] == "validation"].copy()
     test = features[features["split"] == "test"].copy()
 
-    eval_df = evaluate(model, feature_cols, test, ts)
+    eval_df = evaluate(model, feature_cols, validation, test, ts)
+
+    # Per-course breakdown is kept separate because CCC is zero-shot: it has
+    # no 2013 training presentation. AAA has no 2014B validation rows.
+    print("\n=== Test PR-AUC by course ===")
+    course_rows = []
+    for course, te_course in test.groupby("code_module"):
+        for cp in CHECKPOINTS:
+            te = te_course[te_course["checkpoint_label"] == cp].copy()
+            if te.empty:
+                continue
+            X = te[feature_cols].copy()
+            for c in X.columns:
+                X[c] = pd.to_numeric(X[c], errors="coerce")
+            y = te["at_risk"].values.astype(int)
+            score = model.predict_proba(X.fillna(0))[:, 1]
+            course_rows.append({
+                "course": course,
+                "checkpoint": cp,
+                "pr_auc": round(pr_auc(y, score), 4),
+                "n": int(len(te)),
+                "exception": (
+                    "zero_shot_no_training_rows"
+                    if course == "CCC"
+                    else "no_validation_rows"
+                    if course == "AAA"
+                    else None
+                ),
+            })
+    course_df = pd.DataFrame(course_rows)
+    print(course_df.to_string(index=False))
 
     # final_result is already carried in features.parquet (used for subgroup diagnostic).
     print("\n=== Subgroup diagnostic: recall among true Withdrawn vs true Fail ===")
@@ -219,7 +280,7 @@ def main():
     ax.plot([0, 1], [0, 1], linestyle="--", color="gray", label="perfectly calibrated")
     ax.set_xlabel("Mean predicted probability")
     ax.set_ylabel("Fraction of positives")
-    ax.set_title("Calibration curve (held-out test 2014B, all checkpoints)")
+    ax.set_title("Calibration curve (held-out test 2014J, all checkpoints)")
     ax.legend()
     ax.grid(alpha=0.3)
     cal_path = plots_dir / "calibration_curve.png"
@@ -233,9 +294,16 @@ def main():
         "date": datetime.now().strftime("%Y-%m-%d"),
         "checkpoints": eval_df[["checkpoint", "pr_auc", "pr_auc_ci_lo", "pr_auc_ci_hi",
                                 f"recall_at_precision_{int(PRECISION_TARGET*100)}", "precision_at_operating_point",
-                                "operating_threshold", "f1_optimal_recall", "f1_optimal_precision",
-                                "f1_optimal_threshold", "n", "n_at_risk"]].to_dict("records"),
+                                "operating_threshold", "precision", "recall", "f1", "confusion_matrix",
+                                "f1_optimal_recall", "f1_optimal_precision",
+                                "f1_optimal_threshold", "n", "n_at_risk",
+                                "validation_n"]].to_dict("records"),
         "overall_pr_auc": round(float(pr_auc(yall, score_all)), 4),
+        "course_pr_auc": course_df.to_dict("records"),
+        "split_exceptions": {
+            "CCC": "No 2013B or 2013J rows; test performance is zero-shot cross-course generalization.",
+            "AAA": "No 2014B rows; threshold/model-selection validation has no AAA-specific rows.",
+        },
         "subgroup": sub.to_dict("records"),
         "fairness": fair_df.to_dict("records"),
         "calibration_plot": str(cal_path),

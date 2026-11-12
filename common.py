@@ -21,12 +21,13 @@ MODELS = ARTIFACTS / "models"
 # Checkpoint cutoffs, expressed as day-offsets from module start.
 # Fixed calendar cutoffs agreed with the user (see decision log):
 #   week 4 -> day 28, week 8 -> day 56, week 12 -> day 84.
-# Rows for courses where zero assessments have closed by a cutoff are
-# excluded from that checkpoint's feature set (see Step 1 / cutoff build).
+# Rows for courses where zero assessments have closed by a cutoff are KEPT and
+# flagged with `no_assessment_closed` (not excluded) -- see Step 1 / README.
 CUTOFF_DAYS = {"week_4": 28, "week_8": 56, "week_12": 84}
 
-TRAIN_PRESENTATIONS = ["2013J", "2014J"]
-TEST_PRESENTATION = "2014B"
+TRAIN_PRESENTATIONS = ["2013B", "2013J"]
+VALIDATION_PRESENTATION = "2014B"
+TEST_PRESENTATION = "2014J"
 
 LABEL_MAP = {
     "Pass": 0,
@@ -72,7 +73,10 @@ def make_at_risk(final_result: pd.Series) -> pd.Series:
     return final_result.isin(["Withdrawn", "Fail"]).astype(int)
 
 
-def split_train_test(student_info: pd.DataFrame):
+def split_train_validation_test(student_info: pd.DataFrame):
     train = student_info[student_info["code_presentation"].isin(TRAIN_PRESENTATIONS)].copy()
+    validation = student_info[
+        student_info["code_presentation"] == VALIDATION_PRESENTATION
+    ].copy()
     test = student_info[student_info["code_presentation"] == TEST_PRESENTATION].copy()
-    return train, test
+    return train, validation, test
